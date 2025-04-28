@@ -1,5 +1,5 @@
-from telegram import Update,
-from db import users_collection, InlineKeyboardMarkup, InlineKeyboardButton
+from db import users_collection
+from telegram import Update, InlineKeyboardMarkup, InlineKeyboardButton
 from telegram.ext import Application, CommandHandler, CallbackQueryHandler, MessageHandler, filters, ContextTypes, CallbackContext
 import logging
 
@@ -33,7 +33,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     keyboard = [
         [
-            InlineKeyboardButton("⚡ ᎧᏇᏁᏋᏒ ⚡", url=f"https://t.me/{OWNER_USERNAME}"),
+            InlineKeyboardButton("⚡ ᎧᏇᏁᏒ ⚡", url=f"https://t.me/{OWNER_USERNAME}"),
             InlineKeyboardButton("⚡ ᎶᏒᎧᏬᎮ ⚡", url=GROUP_LINK)
         ],
         [
@@ -41,6 +41,9 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         ]
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
+
+    # Yeh line add karo:
+    name = user.first_name  # <-- yeh compulsory hai caption ke liye
 
     # Photo and caption
     photo_url = "https://files.catbox.moe/461mqe.jpg"
@@ -66,7 +69,7 @@ Your ultimate assistant for managing and protecting your group.
         chat_id=update.effective_chat.id,
         photo=photo_url,
         caption=caption,
-        reply_markup=reply_markup  # <-- Inline buttons attach yaha
+        reply_markup=reply_markup
     )
 
 # Button click handler
