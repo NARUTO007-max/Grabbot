@@ -32,8 +32,10 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     reply_markup = InlineKeyboardMarkup(keyboard)
 
     # Photo and caption
-    photo_url = "https://files.catbox.moe/461mqe.jpg"  # Koi bhi welcome image ka link daal
-    caption = f"✨ Welcome {name} to HinataX Support Bot!"
+photo_url = "https://files.catbox.moe/461mqe.jpg"  # Koi bhi welcome image ka link daal
+
+caption = f"""✨ Welcome {name} to HinataX Support Bot!
+
 Your ultimate assistant for managing and protecting your group.
 
 ⚡ Features:
@@ -47,7 +49,8 @@ Your ultimate assistant for managing and protecting your group.
 ✨ Empower your group with smart management and peace of mind!
 
 🔹 Use /help to explore all commands.
-🔹 For support, contact: @Uzumaki_X_Naruto_6"
+🔹 For support, contact: @Uzumaki_X_Naruto_6
+"""
 
     await context.bot.send_photo(
         chat_id=update.effective_chat.id,
