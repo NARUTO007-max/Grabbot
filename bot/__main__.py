@@ -263,6 +263,18 @@ async def demote_user(update: Update, context: ContextTypes.DEFAULT_TYPE):
     except Exception as e:
         await update.message.reply_text(f"An error occurred while demoting the user: {e}")
 
+async def id_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    chat = update.effective_chat
+    user = update.effective_user
+    reply_user = update.message.reply_to_message.from_user if update.message.reply_to_message else None
+
+    text = f"**Your ID:** `{user.id}`\n**Chat ID:** `{chat.id}`"
+
+    if reply_user:
+        text += f"\n**Replied User ID:** `{reply_user.id}`"
+
+    await update.message.reply_text(text, parse_mode="Markdown")
+
 # Main function
 def main():
     application = Application.builder().token(API_TOKEN).build()
@@ -276,6 +288,7 @@ def main():
     application.add_handler(CommandHandler("unban", unban_user))
     application.add_handler(CommandHandler("promote", promote_user))
     application.add_handler(CommandHandler("demote", demote_user))
+application.add_handler(CommandHandler("id", id_command))
 
     # Run
     application.run_polling()
