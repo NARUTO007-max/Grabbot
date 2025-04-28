@@ -22,11 +22,11 @@ logger = logging.getLogger(__name__)
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     keyboard = [
         [
-            InlineKeyboardButton("👑 Owner", url=f"https://t.me/{OWNER_USERNAME}"),
-            InlineKeyboardButton("🌐 Group", url=GROUP_LINK)
+            InlineKeyboardButton("⚡ ᎧᏇᏁᏋᏒ ⚡", url=f"https://t.me/{OWNER_USERNAME}"),
+            InlineKeyboardButton("⚡ ᎶᏒᎧᏬᎮ ⚡", url=GROUP_LINK)
         ],
         [
-            InlineKeyboardButton("❌ Close", callback_data="close")
+            InlineKeyboardButton("⚡ ᏨᏝᎧᏕᏋ ⚡", callback_data="close")
         ]
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
