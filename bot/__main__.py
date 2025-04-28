@@ -219,6 +219,10 @@ def main():
     application.add_handler(CommandHandler("ban", ban_user))
     application.add_handler(CommandHandler("unban", unban_user))
 
+application.add_handler(CommandHandler("promote", promote_user))
+
+application.add_handler(CommandHandler("demote", demote_user))
+
     # Run
     application.run_polling()
 if __name__ == '__main__':
