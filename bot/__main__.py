@@ -1,4 +1,5 @@
-from telegram import Update, InlineKeyboardMarkup, InlineKeyboardButton
+from telegram import Update,
+from db import users_collection, InlineKeyboardMarkup, InlineKeyboardButton
 from telegram.ext import Application, CommandHandler, CallbackQueryHandler, MessageHandler, filters, ContextTypes, CallbackContext
 import logging
 
@@ -21,7 +22,14 @@ logger = logging.getLogger(__name__)
 # /start command
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user = update.effective_user
-    name = user.first_name  # <-- Yeh add karna zaruri hai
+
+    # Pehle database me save karo
+    if not users_collection.find_one({"user_id": user.id}):
+        users_collection.insert_one({
+            "user_id": user.id,
+            "username": user.username,
+            "first_name": user.first_name,
+        })
 
     keyboard = [
         [
