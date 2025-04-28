@@ -159,7 +159,8 @@ async def ban_user(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     try:
         await context.bot.ban_chat_member(chat_id=update.message.chat_id, user_id=user_id)
-        await update.message.reply_text(f"Successfully banned user with ID {user_id}.")
+        await update.message.reply_text(f"Another one bites the dust...!
+Banned {username}.")
     except Exception as e:
         await update.message.reply_text(f"An error occurred while banning: {e}")
 
@@ -187,7 +188,7 @@ async def unban_user(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     try:
         await context.bot.unban_chat_member(chat_id=update.message.chat_id, user_id=user_id)
-        await update.message.reply_text(f"Successfully unbanned user with ID {user_id}.")
+        await update.message.reply_text(f"Fine, they can join again.")
     except Exception as e:
         await update.message.reply_text(f"An error occurred while unbanning: {e}")
 
