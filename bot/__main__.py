@@ -200,12 +200,10 @@ def main():
     application.add_handler(CallbackQueryHandler(button))
     application.add_handler(MessageHandler(filters.StatusUpdate.LEFT_CHAT_MEMBER, user_left))
     application.add_handler(MessageHandler(filters.StatusUpdate.NEW_CHAT_MEMBERS, user_joined))  # New user handler
-
-application.add_handler(CommandHandler("ban", ban_user))
-application.add_handler(CommandHandler("unban", unban_user))
+    application.add_handler(CommandHandler("ban", ban_user))
+    application.add_handler(CommandHandler("unban", unban_user))
 
     # Run
     application.run_polling()
-
 if __name__ == '__main__':
     main()
