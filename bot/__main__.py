@@ -309,7 +309,7 @@ from db import users_collection  # Import karo db se users_collection
 
 # /broadcast command for admin
 async def broadcast(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    admin_ids = [123456789]  # <-- Apna admin ID daal
+    admin_ids = [7019600964]  # <-- Apna admin ID daal
     user_id = update.effective_user.id
 
     if user_id not in admin_ids:
