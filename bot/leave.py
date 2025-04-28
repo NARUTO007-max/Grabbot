@@ -1,40 +1,46 @@
 from telegram import Update
 from telegram.ext import Application, CommandHandler, MessageHandler, filters, CallbackContext
+import logging
+import asyncio
 
 # Bot Token
-API_TOKEN = 'YOUR_BOT_TOKEN'  # Your bot token
+API_TOKEN = '7851576039:AAFv6o74rF5Ej0DP_aa7AAHgDYXKorkbbj8'  # Replace with your bot token
 
 # Admin ID (change it to your admin user ID)
-YOUR_ADMIN_ID = 123456789  # Replace with your admin ID
+YOUR_ADMIN_ID = 7019600964  # Replace with your admin ID
 
 # Group/channel ID (for broadcast command)
-YOUR_CHANNEL_ID = "@your_channel_id"  # Replace with your channel or group ID
+YOUR_CHANNEL_ID = "-1002600495465"  # Replace with your channel or group ID
 
 # Enable logging
-import logging
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-@bot.on_message(filters.command(["broadcast", "bcast"]) & filters.user(OWNER_IDS))
-async def broadcast_handler(client, message):
-    if len(message.command) < 2:
-        return await message.reply("❌ Usage: /broadcast Your message here")
+# Broadcast function
+async def broadcast(update: Update, context: CallbackContext):
+    # Only allow admin to send broadcast messages
+    if update.message.from_user.id == YOUR_ADMIN_ID:
+        message = " ".join(context.args)  # Collect arguments
+        if message:
+            # For now, using in-memory list of users (replace with database for large scale)
+            users = [{"_id": YOUR_ADMIN_ID}]  # Add actual user IDs here
+            success = 0
+            failed = 0
 
-    text = message.text.split(None, 1)[1]
+            for user in users:
+                try:
+                    await update.message.bot.send_message(chat_id=user["_id"], text=message)
+                    success += 1
+                    await asyncio.sleep(0.1)
+                except Exception as e:
+                    logger.error(f"Failed to send message to {user['_id']}: {e}")
+                    failed += 1
 
-    users = await users_collection.find().to_list(length=10000)
-    success = 0
-    failed = 0
-
-    for user in users:
-        try:
-            await bot.send_message(chat_id=user["_id"], text=text)
-            success += 1
-            await asyncio.sleep(0.1)
-        except:
-            failed += 1
-
-    await message.reply(f"✅ Broadcast sent to {success} users.\n❌ Failed to send to {failed} users.")
+            await update.message.reply(f"✅ Broadcast sent to {success} users.\n❌ Failed to send to {failed} users.")
+        else:
+            await update.message.reply("❌ Please provide a message to broadcast.")
+    else:
+        await update.message.reply("❌ You are not authorized to use this command.")
 
 # Goodbye message for when someone leaves the group
 async def user_left(update: Update, context: CallbackContext):
