@@ -29,18 +29,20 @@ async def broadcast(update: Update, context: CallbackContext):
 
             for user in users:
                 try:
-                    await update.message.bot.send_message(chat_id=user["_id"], text=message)
+                    # Use context.bot to send message
+                    await context.bot.send_message(chat_id=user["_id"], text=message)
                     success += 1
                     await asyncio.sleep(0.1)
                 except Exception as e:
                     logger.error(f"Failed to send message to {user['_id']}: {e}")
                     failed += 1
 
-            await update.message.reply(f"✅ Broadcast sent to {success} users.\n❌ Failed to send to {failed} users.")
+            # Send success or failure message to admin
+            await context.bot.send_message(chat_id=update.message.chat_id, text=f"✅ Broadcast sent to {success} users.\n❌ Failed to send to {failed} users.")
         else:
-            await update.message.reply("❌ Please provide a message to broadcast.")
+            await context.bot.send_message(chat_id=update.message.chat_id, text="❌ Please provide a message to broadcast.")
     else:
-        await update.message.reply("❌ You are not authorized to use this command.")
+        await context.bot.send_message(chat_id=update.message.chat_id, text="❌ You are not authorized to use this command.")
 
 # Goodbye message for when someone leaves the group
 async def user_left(update: Update, context: CallbackContext):
@@ -49,14 +51,25 @@ async def user_left(update: Update, context: CallbackContext):
         user_name = user.username if user.username else "Unknown"
         user_profile_pic = (await context.bot.get_user_profile_photos(user.id)).photos[0][-1].file_id
         goodbye_message = f"Sad to see you go, {user_name}! Hope you return soon! 👋"
-        await update.message.reply_photo(photo=user_profile_pic, caption=goodbye_message)
+        await context.bot.send_photo(chat_id=update.message.chat_id, photo=user_profile_pic, caption=goodbye_message)
+
+# on_message handler to handle all incoming messages
+async def on_message(update: Update, context: CallbackContext):
+    text = update.message.text
+
+    # You can check and add more conditions or commands here
+    if text.startswith("/broadcast"):
+        await broadcast(update, context)
+    else:
+        # Handle other incoming messages
+        await context.bot.send_message(chat_id=update.message.chat_id, text="Message received!")
 
 # Main function to run the bot
 def main():
     application = Application.builder().token(API_TOKEN).build()
 
-    # Command Handlers
-    application.add_handler(CommandHandler("broadcast", broadcast))
+    # Add on_message handler for all messages
+    application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, on_message))
 
     # Handler for user leaving the group
     application.add_handler(MessageHandler(filters.StatusUpdate.LEFT_CHAT_MEMBER, user_left))
