@@ -279,5 +279,6 @@ application.add_handler(CommandHandler("demote", demote_user))
 
     # Run
     application.run_polling()
+
 if __name__ == '__main__':
     main()
