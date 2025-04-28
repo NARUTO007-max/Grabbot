@@ -63,5 +63,51 @@ def main():
 
     application.run_polling()
 
+from telegram import Update
+from telegram.ext import Application, MessageHandler, filters, CallbackContext
+
+async def user_left(update: Update, context: CallbackContext):
+    if update.message.left_chat_member:
+        user = update.message.left_chat_member
+        user_name = user.first_name if user.first_name else "Unknown"
+        user_id = user.id
+        user_username = f"@{user.username}" if user.username else "No Username"
+
+        # Group members count
+        chat = await context.bot.get_chat(update.message.chat_id)
+        members_count = await chat.get_member_count()
+
+        # User profile pic
+        try:
+            photos = await context.bot.get_user_profile_photos(user_id)
+            if photos.total_count > 0:
+                file_id = photos.photos[0][-1].file_id
+            else:
+                file_id = None
+        except:
+            file_id = None
+
+        # Caption
+        caption = f"""⎊─────☵ ɢᴏᴏᴅʙʏᴇ ☵─────⎊
+
+▬▭▬▭▬▭▬▭▬▭▬▭▬▭▬
+
+☉ ɴᴀᴍᴇ ⧽ {user_name}
+☉ ɪᴅ ⧽ {user_id}
+☉ ᴜ_ɴᴀᴍᴇ ⧽ {user_username}
+☉ ᴛᴏᴛᴀʟ ᴍᴇᴍʙᴇʀs ⧽ {members_count}
+
+▬▭▬▭▬▭▬▭▬▭▬▭▬▭▬
+
+⎉──────▢✭ 侖 ✭▢──────⎉"""
+
+        if file_id:
+            await update.message.reply_photo(photo=file_id, caption=caption)
+        else:
+            await update.message.reply_text(caption)
+
+# Then in your main code, add:
+application.add_handler(MessageHandler(filters.StatusUpdate.LEFT_CHAT_MEMBER, user_left))
+
 if __name__ == '__main__':
     main()
