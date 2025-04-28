@@ -268,14 +268,14 @@ def main():
     application = Application.builder().token(API_TOKEN).build()
 
     # Handlers
-application.add_handler(CommandHandler("start", start))
-application.add_handler(CallbackQueryHandler(button))
-application.add_handler(MessageHandler(filters.StatusUpdate.LEFT_CHAT_MEMBER, user_left))
-application.add_handler(MessageHandler(filters.StatusUpdate.NEW_CHAT_MEMBERS, user_joined))
-application.add_handler(CommandHandler("ban", ban_user))
-application.add_handler(CommandHandler("unban", unban_user))
-application.add_handler(CommandHandler("promote", promote_user))
-application.add_handler(CommandHandler("demote", demote_user))
+    application.add_handler(CommandHandler("start", start))
+    application.add_handler(CallbackQueryHandler(button))
+    application.add_handler(MessageHandler(filters.StatusUpdate.LEFT_CHAT_MEMBER, user_left))
+    application.add_handler(MessageHandler(filters.StatusUpdate.NEW_CHAT_MEMBERS, user_joined))
+    application.add_handler(CommandHandler("ban", ban_user))
+    application.add_handler(CommandHandler("unban", unban_user))
+    application.add_handler(CommandHandler("promote", promote_user))
+    application.add_handler(CommandHandler("demote", demote_user))
 
     # Run
     application.run_polling()
