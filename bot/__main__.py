@@ -3,7 +3,7 @@ from telegram.ext import Application, CommandHandler, CallbackQueryHandler, Mess
 import logging
 
 # Bot Token
-API_TOKEN = '7851576039:AAFv6o74rF5Ej0DP_aa7AAHgDYXKorkbbj8'  # Replace with your bot token
+API_TOKEN = '7608107574:AAGMrCB5b3O5vJJNvu07cQ8vsmkzRksjN74'  # Replace with your bot token
 
 # Admin ID
 YOUR_ADMIN_ID = 7019600964  # Replace with your admin ID
