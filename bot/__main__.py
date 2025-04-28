@@ -288,7 +288,7 @@ def main():
     application.add_handler(CommandHandler("unban", unban_user))
     application.add_handler(CommandHandler("promote", promote_user))
     application.add_handler(CommandHandler("demote", demote_user))
-application.add_handler(CommandHandler("id", id_command))
+    application.add_handler(CommandHandler("id", id_command))  # <- ye bhi andar hona chahiye, same level par
 
     # Run
     application.run_polling()
