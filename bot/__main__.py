@@ -20,6 +20,9 @@ logger = logging.getLogger(__name__)
 
 # /start command
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    user = update.effective_user
+    name = user.first_name  # <-- Yeh add karna zaruri hai
+
     keyboard = [
         [
             InlineKeyboardButton("⚡ ᎧᏇᏁᏋᏒ ⚡", url=f"https://t.me/{OWNER_USERNAME}"),
@@ -31,7 +34,6 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
 
-    
     # Photo and caption
     photo_url = "https://files.catbox.moe/461mqe.jpg"
     caption = f"""✨ Welcome {name} to HinataX Support Bot!
@@ -55,7 +57,8 @@ Your ultimate assistant for managing and protecting your group.
     await context.bot.send_photo(
         chat_id=update.effective_chat.id,
         photo=photo_url,
-        caption=caption
+        caption=caption,
+        reply_markup=reply_markup  # <-- Inline buttons attach yaha
     )
 
 # Button click handler
