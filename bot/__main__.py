@@ -33,7 +33,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     # Photo and caption
     photo_url = "https://files.catbox.moe/62uskb.jpg"  # Koi bhi welcome image ka link daal
-    caption = f"✨ Welcome {name} to HinataX Support Bot!
+    caption = f"✨ Welcome {name} to HinataX Support Bot!"
 Your ultimate assistant for managing and protecting your group.
 
 ⚡ Features:
