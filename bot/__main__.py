@@ -294,6 +294,35 @@ async def id_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     await update.message.reply_text(text, parse_mode="Markdown")
 
+from db import users_collection  # Import karo db se users_collection
+
+# /broadcast command for admin
+async def broadcast(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    admin_ids = [123456789]  # <-- Apna admin ID daal
+    user_id = update.effective_user.id
+
+    if user_id not in admin_ids:
+        await update.message.reply_text("Sorry, you are not authorized to use this command.")
+        return
+
+    if not context.args:
+        await update.message.reply_text("Please provide a message to broadcast.")
+        return
+
+    broadcast_message = " ".join(context.args)
+
+    # Fetch all user IDs from MongoDB
+    users = users_collection.find()
+    all_user_ids = [user["user_id"] for user in users]
+
+    for user_id in all_user_ids:
+        try:
+            await context.bot.send_message(chat_id=user_id, text=broadcast_message)
+        except Exception as e:
+            print(f"Failed to send message to {user_id}: {e}")
+
+    await update.message.reply_text("Broadcast message sent to all users.")
+
 # Main function
 def main():
     application = Application.builder().token(API_TOKEN).build()
@@ -308,6 +337,8 @@ def main():
     application.add_handler(CommandHandler("promote", promote_user))
     application.add_handler(CommandHandler("demote", demote_user))
     application.add_handler(CommandHandler("id", id_command))  # <- ye bhi andar hona chahiye, same level par
+
+application.add_handler(CommandHandler("broadcast", broadcast))
 
     # Run
     application.run_polling()
