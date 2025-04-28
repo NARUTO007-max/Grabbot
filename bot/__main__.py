@@ -138,59 +138,74 @@ async def user_joined(update: Update, context: CallbackContext):
 # /ban command
 async def ban_user(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if update.message.chat.type not in ['group', 'supergroup']:
-        await update.message.reply_text("This command can only be used in groups.")
+        await update.message.reply_text("⚠️ This command can only be used in groups.")
         return
 
-    bot_member = await context.bot.get_chat_member(update.message.chat_id, context.bot.id)
+    bot_member = await context.bot.get_chat_member(update.message.chat.id, context.bot.id)
     if not bot_member.can_restrict_members:
-        await update.message.reply_text("I don't have permission to ban members!")
+        await update.message.reply_text("⚠️ I don't have permission to ban members!")
         return
 
     user_id = None
+    username = None
 
     if update.message.reply_to_message:
-        user_id = update.message.reply_to_message.from_user.id
+        user = update.message.reply_to_message.from_user
+        user_id = user.id
+        username = user.mention_html()
     elif context.args:
         user_id = int(context.args[0])
+        try:
+            user = await context.bot.get_chat_member(update.message.chat.id, user_id)
+            username = user.user.mention_html()
+        except:
+            username = f"user with ID {user_id}"
 
     if not user_id:
-        await update.message.reply_text("Please reply to a user's message or provide a user ID to ban.")
+        await update.message.reply_text("⚠️ Please reply to a user's message or provide a user ID to ban.")
         return
 
     try:
-        await context.bot.ban_chat_member(chat_id=update.message.chat_id, user_id=user_id)
-        await update.message.reply_text(f"Another one bites the dust...!
-Banned {username}.")
+        await context.bot.ban_chat_member(chat_id=update.message.chat.id, user_id=user_id)
+        await update.message.reply_html(f"🚫 Banned {username} successfully!")
     except Exception as e:
-        await update.message.reply_text(f"An error occurred while banning: {e}")
+        await update.message.reply_text(f"❌ An error occurred while banning:\n{e}")
 
 # /unban command
 async def unban_user(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if update.message.chat.type not in ['group', 'supergroup']:
-        await update.message.reply_text("This command can only be used in groups.")
+        await update.message.reply_text("⚠️ This command can only be used in groups.")
         return
 
-    bot_member = await context.bot.get_chat_member(update.message.chat_id, context.bot.id)
+    bot_member = await context.bot.get_chat_member(update.message.chat.id, context.bot.id)
     if not bot_member.can_restrict_members:
-        await update.message.reply_text("I don't have permission to unban members!")
+        await update.message.reply_text("⚠️ I don't have permission to unban members!")
         return
 
     user_id = None
+    username = None
 
     if update.message.reply_to_message:
-        user_id = update.message.reply_to_message.from_user.id
+        user = update.message.reply_to_message.from_user
+        user_id = user.id
+        username = user.mention_html()
     elif context.args:
         user_id = int(context.args[0])
+        try:
+            user = await context.bot.get_chat_member(update.message.chat.id, user_id)
+            username = user.user.mention_html()
+        except:
+            username = f"user with ID {user_id}"
 
     if not user_id:
-        await update.message.reply_text("Please reply to a user's message or provide a user ID to unban.")
+        await update.message.reply_text("⚠️ Please reply to a user's message or provide a user ID to unban.")
         return
 
     try:
-        await context.bot.unban_chat_member(chat_id=update.message.chat_id, user_id=user_id)
-        await update.message.reply_text(f"Fine, they can join again.")
+        await context.bot.unban_chat_member(chat_id=update.message.chat.id, user_id=user_id)
+        await update.message.reply_html(f"✅ Unbanned {username} successfully!")
     except Exception as e:
-        await update.message.reply_text(f"An error occurred while unbanning: {e}")
+        await update.message.reply_text(f"❌ An error occurred while unbanning:\n{e}")
 
 # Main function
 def main():
