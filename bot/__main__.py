@@ -207,6 +207,62 @@ async def unban_user(update: Update, context: ContextTypes.DEFAULT_TYPE):
     except Exception as e:
         await update.message.reply_text(f"❌ An error occurred while unbanning:\n{e}")
 
+async def promote_user(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if update.message.reply_to_message:
+        user = update.message.reply_to_message.from_user
+        user_id = user.id
+    elif context.args:
+        user_id = int(context.args[0])
+        user = await context.bot.get_chat_member(update.effective_chat.id, user_id).user
+    else:
+        await update.message.reply_text("Please reply to a user or provide a user ID to promote.")
+        return
+
+    try:
+        await context.bot.promote_chat_member(
+            chat_id=update.effective_chat.id,
+            user_id=user_id,
+            can_change_info=True,
+            can_delete_messages=True,
+            can_invite_users=True,
+            can_restrict_members=True,
+            can_pin_messages=True,
+            can_promote_members=False,
+            can_manage_video_chats=True,
+            can_manage_chat=True
+        )
+        await update.message.reply_text(f"Successfully promoted @{user.username} ✅")
+    except Exception as e:
+        await update.message.reply_text(f"An error occurred while promoting the user: {e}")
+
+async def demote_user(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if update.message.reply_to_message:
+        user = update.message.reply_to_message.from_user
+        user_id = user.id
+    elif context.args:
+        user_id = int(context.args[0])
+        user = await context.bot.get_chat_member(update.effective_chat.id, user_id).user
+    else:
+        await update.message.reply_text("Please reply to a user or provide a user ID to demote.")
+        return
+
+    try:
+        await context.bot.promote_chat_member(
+            chat_id=update.effective_chat.id,
+            user_id=user_id,
+            can_change_info=False,
+            can_delete_messages=False,
+            can_invite_users=False,
+            can_restrict_members=False,
+            can_pin_messages=False,
+            can_promote_members=False,
+            can_manage_video_chats=False,
+            can_manage_chat=False
+        )
+        await update.message.reply_text(f"Successfully demoted @{user.username} ✅")
+    except Exception as e:
+        await update.message.reply_text(f"An error occurred while demoting the user: {e}")
+
 # Main function
 def main():
     application = Application.builder().token(API_TOKEN).build()
