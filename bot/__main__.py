@@ -202,7 +202,7 @@ def main():
     application.add_handler(MessageHandler(filters.StatusUpdate.NEW_CHAT_MEMBERS, user_joined))  # New user handler
 
 application.add_handler(CommandHandler("ban", ban_user))
-    application.add_handler(CommandHandler("unban", unban_user))
+application.add_handler(CommandHandler("unban", unban_user))
 
     # Run
     application.run_polling()
