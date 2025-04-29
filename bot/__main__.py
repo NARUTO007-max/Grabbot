@@ -33,6 +33,29 @@ OWNER_USERNAME = "Uzumaki_X_Naruto_6"  # Apna username daal (without @)
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+# /ranking command 
+async def ranking(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    from db import get_top_daily_users  # MongoDB se top users laane ke liye
+    from leaderboard import generate_leaderboard_image  # Image generate function
+
+    data, total_messages = await get_top_daily_users()
+    image = generate_leaderboard_image(data)
+
+    caption = "📈 LEADERBOARD\n"
+    for i, (username, count) in enumerate(data, start=1):
+        display_name = username[:12] + "..." if len(username) > 12 else username
+        caption += f"{i}. 👤 {display_name} • {count:,}\n"
+    caption += f"\n✉️ Total messages: {total_messages:,}"
+
+    keyboard = [
+        [InlineKeyboardButton("📊 Overall", callback_data="ranking_overall"),
+         InlineKeyboardButton("📅 Today", callback_data="ranking_today"),
+         InlineKeyboardButton("🗓️ This Week", callback_data="ranking_week")]
+    ]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+
+    await update.message.reply_photo(photo=InputFile(image), caption=caption, reply_markup=reply_markup)
+
 # /start command
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user = update.effective_user
