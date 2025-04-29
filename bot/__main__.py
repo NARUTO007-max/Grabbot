@@ -1,5 +1,5 @@
 from bot.db import users_collection
-from telegram.constants import ChatPermissions
+from telegram import ChatPermissions
 from telegram import (
     Update,
     InlineKeyboardMarkup,
