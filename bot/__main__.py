@@ -476,10 +476,9 @@ def main():
     application.add_handler(CommandHandler("promote", promote_user))
     application.add_handler(CommandHandler("demote", demote_user))
     application.add_handler(CommandHandler("id", id_command))  
-    application.add_handler(CommandHandler("broadcast", broadcast))  # <- Ye line sahi jagah aayi, same level par
-application.add_handler(CommandHandler(["all", "tagall"], tag_all))
-application.add_handler(CommandHandler("alloff", stop_tagging))
-
+    application.add_handler(CommandHandler("broadcast", broadcast))  
+    application.add_handler(CommandHandler(["all", "tagall"], tag_all))  # <-- Moved properly inside
+    application.add_handler(CommandHandler("alloff", stop_tagging))      # <-- Moved properly inside
 
     # Run
     application.run_polling()
