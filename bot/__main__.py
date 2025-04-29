@@ -36,8 +36,11 @@ logger = logging.getLogger(__name__)
 
 # /ranking command 
 async def ranking(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    from db import get_top_daily_users  # MongoDB se top users laane ke liye
-    from leaderboard import generate_leaderboard_image  # Image generate function
+    if not update.message:
+        return  # <- Yeh line add karni hai
+
+    from db import get_top_daily_users
+    from leaderboard import generate_leaderboard_image
 
     data, total_messages = await get_top_daily_users()
     image = generate_leaderboard_image(data)
@@ -55,10 +58,7 @@ async def ranking(update: Update, context: ContextTypes.DEFAULT_TYPE):
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
 
-    if update.message:
-    await update.message.reply_photo(...)
-elif update.callback_query:
-    await update.callback_query.message.reply_photo(...)
+    await update.message.reply_photo(photo=InputFile(image), caption=caption, reply_markup=reply_markup)
 
 # /start command
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
