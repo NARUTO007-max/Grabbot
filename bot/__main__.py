@@ -762,6 +762,9 @@ def main():
     application.add_handler(CommandHandler("kick", kick))
     application.add_handler(CallbackQueryHandler(kick_buttons, pattern="^(confirm_kick|cancel_kick)"))
 
+    # Add /ranking command handler here
+    application.add_handler(CommandHandler("ranking", ranking))
+
     # Run the bot
     application.run_polling()
 
