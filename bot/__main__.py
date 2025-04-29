@@ -314,23 +314,72 @@ async def broadcast(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text("Sorry, you are not authorized to use this command.")
         return
 
-    if not context.args:
+    message = update.message
+    if not message:
         await update.message.reply_text("Please provide a message to broadcast.")
         return
-
-    broadcast_message = " ".join(context.args)
 
     # Fetch all user IDs from MongoDB
     users = users_collection.find()
     all_user_ids = [user["user_id"] for user in users]
 
-    for user_id in all_user_ids:
-        try:
-            await context.bot.send_message(chat_id=user_id, text=broadcast_message)
-        except Exception as e:
-            print(f"Failed to send message to {user_id}: {e}")
+    # Groups collection bhi add karo
+    try:
+        groups = groups_collection.find()
+        all_group_ids = [group["chat_id"] for group in groups]
+    except:
+        all_group_ids = []
 
-    await update.message.reply_text("Broadcast message sent to all users.")
+    all_ids = all_user_ids + all_group_ids
+
+    # Identify if media exists
+    broadcast_message = " ".join(context.args) if context.args else None
+    caption = message.caption if message.caption else broadcast_message
+    file_id = None
+    media_type = None
+
+    if message.photo:
+        file_id = message.photo[-1].file_id
+        media_type = "photo"
+    elif message.video:
+        file_id = message.video.file_id
+        media_type = "video"
+    elif message.document:
+        file_id = message.document.file_id
+        media_type = "document"
+    elif message.animation:
+        file_id = message.animation.file_id
+        media_type = "animation"
+
+    # Broadcast
+    success = 0
+    failed = 0
+
+    for uid in all_ids:
+        try:
+            if media_type == "photo":
+                await context.bot.send_photo(chat_id=uid, photo=file_id, caption=caption, parse_mode=ParseMode.HTML)
+            elif media_type == "video":
+                await context.bot.send_video(chat_id=uid, video=file_id, caption=caption, parse_mode=ParseMode.HTML)
+            elif media_type == "document":
+                await context.bot.send_document(chat_id=uid, document=file_id, caption=caption, parse_mode=ParseMode.HTML)
+            elif media_type == "animation":
+                await context.bot.send_animation(chat_id=uid, animation=file_id, caption=caption, parse_mode=ParseMode.HTML)
+            else:
+                await context.bot.send_message(chat_id=uid, text=broadcast_message, parse_mode=ParseMode.HTML)
+
+            success += 1
+        except Exception as e:
+            print(f"Failed to send to {uid}: {e}")
+            failed += 1
+
+    await update.message.reply_text(
+        f"✅ <b>Broadcast Completed!</b>\n\n"
+        f"• Total IDs: {len(all_ids)}\n"
+        f"• Success: {success}\n"
+        f"• Failed: {failed}",
+        parse_mode=ParseMode.HTML
+    )
 
 # Main function
 def main():
