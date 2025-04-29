@@ -578,6 +578,10 @@ def main():
     application.add_handler(CommandHandler("warn", warn))
     application.add_handler(CommandHandler("unwarn", unwarn))
 
+application.add_handler(CommandHandler("mute", mute_user))
+
+application.add_handler(CommandHandler("unmute", unmute_user))
+
     # Run
     application.run_polling()
 
