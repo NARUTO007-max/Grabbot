@@ -1,4 +1,5 @@
 from bot.db import users_collection
+from telegram.constants import ChatPermissions
 from telegram import (
     Update,
     InlineKeyboardMarkup,
@@ -554,6 +555,103 @@ async def unwarn(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await update.message.reply_text(f"{warned_user.first_name} has no warnings.")
     else:
         await update.message.reply_text(f"{warned_user.first_name} has no warnings.")
+
+# /mute command
+async def mute_user(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    chat = update.effective_chat
+    sender = update.effective_user
+
+    # Only groups
+    if chat.type not in ["group", "supergroup"]:
+        await update.message.reply_text("This command only works in groups!")
+        return
+
+    # Only admins can mute
+    sender_member = await chat.get_member(sender.id)
+    if sender_member.status not in ["administrator", "creator"]:
+        await update.message.reply_text("Only admins can mute users.")
+        return
+
+    # Target user
+    user_to_mute = None
+    if update.message.reply_to_message:
+        user_to_mute = update.message.reply_to_message.from_user
+    elif context.args:
+        username = context.args[0]
+        if username.startswith('@'):
+            username = username[1:]
+        try:
+            user_info = await context.bot.get_chat_member(chat.id, username)
+            user_to_mute = user_info.user
+        except Exception:
+            await update.message.reply_text("Couldn't find the user. Please reply or mention username!")
+            return
+    else:
+        await update.message.reply_text("Reply to a user or provide a username to mute.")
+        return
+
+    # Check if target is admin
+    target_member = await chat.get_member(user_to_mute.id)
+    if target_member.status in ["administrator", "creator"]:
+        await update.message.reply_text("You cannot mute an admin!")
+        return
+
+    # Mute (permanent)
+    await context.bot.restrict_chat_member(
+        chat.id,
+        user_to_mute.id,
+        permissions=ChatPermissions(can_send_messages=False)
+    )
+
+    await update.message.reply_text(f"🔇 Muted {user_to_mute.mention_html()} successfully!", parse_mode="HTML")
+
+# /unmute command
+async def unmute_user(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    chat = update.effective_chat
+    sender = update.effective_user
+
+    # Only groups
+    if chat.type not in ["group", "supergroup"]:
+        await update.message.reply_text("This command only works in groups!")
+        return
+
+    # Only admins can unmute
+    sender_member = await chat.get_member(sender.id)
+    if sender_member.status not in ["administrator", "creator"]:
+        await update.message.reply_text("Only admins can unmute users.")
+        return
+
+    # Target user
+    user_to_unmute = None
+    if update.message.reply_to_message:
+        user_to_unmute = update.message.reply_to_message.from_user
+    elif context.args:
+        username = context.args[0]
+        if username.startswith('@'):
+            username = username[1:]
+        try:
+            user_info = await context.bot.get_chat_member(chat.id, username)
+            user_to_unmute = user_info.user
+        except Exception:
+            await update.message.reply_text("Couldn't find the user. Please reply or mention username!")
+            return
+    else:
+        await update.message.reply_text("Reply to a user or provide a username to unmute.")
+        return
+
+    # Unmute
+    await context.bot.restrict_chat_member(
+        chat.id,
+        user_to_unmute.id,
+        permissions=ChatPermissions(
+            can_send_messages=True,
+            can_send_media_messages=True,
+            can_send_other_messages=True,
+            can_add_web_page_previews=True,
+        )
+    )
+
+    await update.message.reply_text(f"🔊 Unmuted {user_to_unmute.mention_html()} successfully!", parse_mode="HTML")
 
 # Main function
 def main():
