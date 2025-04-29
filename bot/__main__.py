@@ -1,5 +1,6 @@
 from bot.db import users_collection
 from telegram import ChatPermissions
+from telegram import InputFile
 from telegram import (
     Update,
     InlineKeyboardMarkup,
@@ -54,7 +55,10 @@ async def ranking(update: Update, context: ContextTypes.DEFAULT_TYPE):
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
 
-    await update.message.reply_photo(photo=InputFile(image), caption=caption, reply_markup=reply_markup)
+    if update.message:
+    await update.message.reply_photo(...)
+elif update.callback_query:
+    await update.callback_query.message.reply_photo(...)
 
 # /start command
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
