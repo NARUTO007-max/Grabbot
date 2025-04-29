@@ -481,6 +481,80 @@ async def stop_tagging(update: Update, context: ContextTypes.DEFAULT_TYPE):
     # Disable tagging
     group_tagging[chat.id] = False
     await update.message.reply_text("➥ Tagging turned off by /alloff")
+
+# Warning system memory
+user_warnings = {}
+
+# /warn command
+async def warn(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    chat = update.effective_chat
+    sender = update.effective_user
+
+    # Check if used in group
+    if chat.type not in ["group", "supergroup"]:
+        await update.message.reply_text("This command only works in groups!")
+        return
+
+    # Check if sender is an admin
+    member = await chat.get_member(sender.id)
+    if member.status not in ["administrator", "creator"]:
+        await update.message.reply_text("Only admins are allowed to issue warnings.")
+        return
+
+    # Check if user to warn is mentioned
+    if not update.message.reply_to_message:
+        await update.message.reply_text("Reply to a user's message to warn them.")
+        return
+
+    warned_user = update.message.reply_to_message.from_user
+    user_id = warned_user.id
+
+    # Increase warning count
+    user_warnings.setdefault(chat.id, {})
+    user_warnings[chat.id][user_id] = user_warnings[chat.id].get(user_id, 0) + 1
+
+    warnings = user_warnings[chat.id][user_id]
+    if warnings >= 3:
+        await update.message.reply_text(f"⚠️ User {warned_user.first_name} has {warnings}/3 warnings! ⚠️\nAction needed!")
+        # You can add automatic ban/kick here if needed
+    else:
+        await update.message.reply_text(f"User {warned_user.first_name} has {warnings}/3 warnings; be careful!")
+
+# /unwarn command
+async def unwarn(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    chat = update.effective_chat
+    sender = update.effective_user
+
+    # Check if used in group
+    if chat.type not in ["group", "supergroup"]:
+        await update.message.reply_text("This command only works in groups!")
+        return
+
+    # Check if sender is an admin
+    member = await chat.get_member(sender.id)
+    if member.status not in ["administrator", "creator"]:
+        await update.message.reply_text("Only admins are allowed to remove warnings.")
+        return
+
+    # Check if user to unwarn is mentioned
+    if not update.message.reply_to_message:
+        await update.message.reply_text("Reply to a user's message to remove their warning.")
+        return
+
+    warned_user = update.message.reply_to_message.from_user
+    user_id = warned_user.id
+
+    # Remove warning
+    if chat.id in user_warnings and user_id in user_warnings[chat.id]:
+        if user_warnings[chat.id][user_id] > 0:
+            user_warnings[chat.id][user_id] -= 1
+            warnings = user_warnings[chat.id][user_id]
+            await update.message.reply_text(f"Warning removed for {warned_user.first_name} (now {warnings}/3 warnings)")
+        else:
+            await update.message.reply_text(f"{warned_user.first_name} has no warnings.")
+    else:
+        await update.message.reply_text(f"{warned_user.first_name} has no warnings.")
+
 # Main function
 def main():
     application = Application.builder().token(API_TOKEN).build()
@@ -498,6 +572,10 @@ def main():
     application.add_handler(CommandHandler("broadcast", broadcast))  
     application.add_handler(CommandHandler(["all", "tagall"], tag_all))  # <-- Moved properly inside
     application.add_handler(CommandHandler("alloff", stop_tagging))      # <-- Moved properly inside
+
+application.add_handler(CommandHandler("warn", warn))
+
+application.add_handler(CommandHandler("unwarn", unwarn))
 
     # Run
     application.run_polling()
