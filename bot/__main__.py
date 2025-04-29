@@ -319,81 +319,37 @@ async def id_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     await update.message.reply_text(text, parse_mode="Markdown")
 
-# /broadcast command for admin
+# Broadcast Command (for Owner only)
 async def broadcast(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    admin_ids = [7019600964]  # <-- Apna admin ID daal
-    user_id = update.effective_user.id
-
-    if user_id not in admin_ids:
-        await update.message.reply_text("Sorry, you are not authorized to use this command.")
+    # Check if user is OWNER
+    OWNER_IDS = [7019600964]  # <-- Apne OWNER ID yaha daalna
+    if update.effective_user.id not in OWNER_IDS:
+        await update.message.reply_text("❌ You are not authorized to use this command.")
         return
 
-    message = update.message
-    if not message:
-        await update.message.reply_text("Please provide a message to broadcast.")
+    # Check if message has text to broadcast
+    if not context.args:
+        await update.message.reply_text("❌ Usage: /broadcast Your message here")
         return
 
-    # Fetch all user IDs from MongoDB
-    users = users_collection.find()
-    all_user_ids = [user["user_id"] for user in users]
+    text = " ".join(context.args)
 
-    # Groups collection bhi add karo
-    try:
-        groups = groups_collection.find()
-        all_group_ids = [group["chat_id"] for group in groups]
-    except:
-        all_group_ids = []
+    # Ab users database se fetch karna hai (assume karte hain users ko kahi store kiya hai)
+    users = []  # TODO: Apna database se users list yaha laana
+    # Example: users = await users_collection.find().to_list(length=10000)
 
-    all_ids = all_user_ids + all_group_ids
-
-    # Identify if media exists
-    broadcast_message = " ".join(context.args) if context.args else None
-    caption = message.caption if message.caption else broadcast_message
-    file_id = None
-    media_type = None
-
-    if message.photo:
-        file_id = message.photo[-1].file_id
-        media_type = "photo"
-    elif message.video:
-        file_id = message.video.file_id
-        media_type = "video"
-    elif message.document:
-        file_id = message.document.file_id
-        media_type = "document"
-    elif message.animation:
-        file_id = message.animation.file_id
-        media_type = "animation"
-
-    # Broadcast
     success = 0
     failed = 0
 
-    for uid in all_ids:
+    for user_id in users:
         try:
-            if media_type == "photo":
-                await context.bot.send_photo(chat_id=uid, photo=file_id, caption=caption, parse_mode=ParseMode.HTML)
-            elif media_type == "video":
-                await context.bot.send_video(chat_id=uid, video=file_id, caption=caption, parse_mode=ParseMode.HTML)
-            elif media_type == "document":
-                await context.bot.send_document(chat_id=uid, document=file_id, caption=caption, parse_mode=ParseMode.HTML)
-            elif media_type == "animation":
-                await context.bot.send_animation(chat_id=uid, animation=file_id, caption=caption, parse_mode=ParseMode.HTML)
-            else:
-                await context.bot.send_message(chat_id=uid, text=broadcast_message, parse_mode=ParseMode.HTML)
-
+            await context.bot.send_message(chat_id=user_id, text=text)
             success += 1
-        except Exception as e:
-            print(f"Failed to send to {uid}: {e}")
+            await asyncio.sleep(0.1)
+        except:
             failed += 1
 
-    await update.message.reply_text(
-        f"✅ <b>Broadcast Completed!</b>\n\n"
-        f"• Total IDs: {len(all_ids)}\n"
-        f"• Success: {success}\n"
-        f"• Failed: {failed}",
-        parse_mode=ParseMode.HTML
-    )
+    await update.message.reply_text(f"✅ Broadcast sent to {success} users.\n❌ Failed to send to {failed} users.")
 
 # Group tagging control
 group_tagging = {}
