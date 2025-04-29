@@ -703,11 +703,11 @@ def main():
     application.add_handler(CommandHandler("mute", mute_user))
     application.add_handler(CommandHandler("unmute", unmute_user))
 
-application.add_handler(CommandHandler("kick", kick))
+    # Kick handlers
+    application.add_handler(CommandHandler("kick", kick))
+    application.add_handler(CallbackQueryHandler(kick_buttons, pattern="^(confirm_kick|cancel_kick)"))
 
-application.add_handler(CallbackQueryHandler(kick_buttons, pattern="^(confirm_kick|cancel_kick)"))
-
-    # Run
+    # Run the bot
     application.run_polling()
 
 if __name__ == '__main__':
