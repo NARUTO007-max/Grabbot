@@ -305,8 +305,6 @@ async def id_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     await update.message.reply_text(text, parse_mode="Markdown")
 
-from db import users_collection  # Import karo db se users_collection
-
 # /broadcast command for admin
 async def broadcast(update: Update, context: ContextTypes.DEFAULT_TYPE):
     admin_ids = [7019600964]  # <-- Apna admin ID daal
