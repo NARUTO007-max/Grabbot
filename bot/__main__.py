@@ -559,6 +559,7 @@ async def unwarn(update: Update, context: ContextTypes.DEFAULT_TYPE):
 def main():
     application = Application.builder().token(API_TOKEN).build()
 
+    
     # Handlers
     application.add_handler(CommandHandler("start", start))
     application.add_handler(CallbackQueryHandler(button))
@@ -570,12 +571,12 @@ def main():
     application.add_handler(CommandHandler("demote", demote_user))
     application.add_handler(CommandHandler("id", id_command))  
     application.add_handler(CommandHandler("broadcast", broadcast))  
-    application.add_handler(CommandHandler(["all", "tagall"], tag_all))  # <-- Moved properly inside
-    application.add_handler(CommandHandler("alloff", stop_tagging))      # <-- Moved properly inside
-
-application.add_handler(CommandHandler("warn", warn))
-
-application.add_handler(CommandHandler("unwarn", unwarn))
+    application.add_handler(CommandHandler(["all", "tagall"], tag_all))
+    application.add_handler(CommandHandler("alloff", stop_tagging))
+    
+    # Yaha add karo warn/unwarn bhi properly
+    application.add_handler(CommandHandler("warn", warn))
+    application.add_handler(CommandHandler("unwarn", unwarn))
 
     # Run
     application.run_polling()
