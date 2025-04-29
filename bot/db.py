@@ -1,7 +1,7 @@
 from pymongo import MongoClient
 
 # MongoDB URL (Replace with your connection string)
-MONGO_URL = "mongodb+srv://Naruto:Naruto7775549@cluster1.ge8jrgm.mongodb.net/?retryWrites=true&w=majority&appName=Cluster1"
+MONGO_URL = "mongodb+srv://sufyan532011:2010@dbz.28ftn.mongodb.net/?retryWrites=true&w=majority&appName=DBZ"
 
 # Create a client
 client = MongoClient(MONGO_URL)
