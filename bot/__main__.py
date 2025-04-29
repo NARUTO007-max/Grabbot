@@ -40,7 +40,7 @@ async def ranking(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not update.message:
         return  # <- Yeh line add karni hai
 
-    from db import get_top_daily_users
+    from bot.db import get_top_daily_users
     from leaderboard import generate_leaderboard_image
 
     data, total_messages = await get_top_daily_users()
