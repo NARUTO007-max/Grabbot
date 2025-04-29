@@ -409,38 +409,50 @@ async def tag_all(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     # Check if sender is an admin
     member = await chat.get_member(sender.id)
-    if not member.status in ["administrator", "creator"]:
+    if member.status not in ["administrator", "creator"]:
         await update.message.reply_text("Only admins are allowed to use this command.")
         return
 
     # Enable tagging for the group
     group_tagging[chat.id] = True
 
-    # Fetch all group members (excluding bots)
+    # Fetch all members (ONLY currently available ones)
     members = []
-    async for member in context.bot.get_chat_administrators(chat.id):
+    try:
+        chat_members = await context.bot.get_chat(chat.id)
+        # Note: Full member listing needs extra pagination logic (Telegram API limit)
+        # We'll use known group members here (chat title, not all users)
+    except Exception as e:
+        await update.message.reply_text("Unable to fetch group members.")
+        return
+
+    # Telegram Bot API doesn't allow getting all group members directly
+    # So better, we'll use message.reply in big groups to avoid issues
+
+    # Prepare the mention text
+    mention_text = ""
+    async for member in chat.get_administrators():
         if member.user.is_bot:
             continue
-        members.append(member.user)
-
-    # Prepare the mention message
-    mention_text = ""
-    for user in members:
-        if user.username:
-            mention_text += f"⊚ @{user.username}\n"
+        if member.user.username:
+            mention_text += f"⊚ @{member.user.username}\n"
         else:
-            mention_text += f"⊚ {user.first_name}\n"
+            mention_text += f"⊚ {member.user.first_name}\n"
+
+    if not mention_text:
+        await update.message.reply_text("No members found to tag.")
+        return
 
     # Combine with original message text
     original_text = update.message.text.replace('/all', '').replace('@all', '').strip()
     final_text = f"{original_text}\n\n{mention_text}"
 
-    # Send message in parts if too long
+    # Send message (split if necessary)
     if len(final_text) <= 4096:
-        await context.bot.send_message(chat_id=chat.id, text=final_text)
+        await update.message.reply_text(final_text)
     else:
         for i in range(0, len(final_text), 4000):
-            await context.bot.send_message(chat_id=chat.id, text=final_text[i:i+4000])
+            await update.message.reply_text(final_text[i:i+4000])
 
 # /alloff command
 async def stop_tagging(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -454,7 +466,7 @@ async def stop_tagging(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     # Check if sender is an admin
     member = await chat.get_member(sender.id)
-    if not member.status in ["administrator", "creator"]:
+    if member.status not in ["administrator", "creator"]:
         await update.message.reply_text("Only admins are allowed to use this command.")
         return
 
