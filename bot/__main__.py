@@ -416,28 +416,36 @@ async def tag_all(update: Update, context: ContextTypes.DEFAULT_TYPE):
     # Enable tagging for the group
     group_tagging[chat.id] = True
 
-    # Fetch all members (ONLY currently available ones)
-    members = []
-    try:
-        chat_members = await context.bot.get_chat(chat.id)
-        # Note: Full member listing needs extra pagination logic (Telegram API limit)
-        # We'll use known group members here (chat title, not all users)
-    except Exception as e:
-        await update.message.reply_text("Unable to fetch group members.")
-        return
+    # WARNING: Telegram API limitation => Bots can't fetch all group members normally.
+    # Workaround: We'll tag only recent chat members (those active recently)
 
-    # Telegram Bot API doesn't allow getting all group members directly
-    # So better, we'll use message.reply in big groups to avoid issues
+    # Fetch administrators (optional if you want to exclude only bots)
+    admins = await chat.get_administrators()
+    admin_ids = [admin.user.id for admin in admins]
 
-    # Prepare the mention text
+    # Prepare mention text
     mention_text = ""
-    async for member in chat.get_administrators():
-        if member.user.is_bot:
-            continue
-        if member.user.username:
-            mention_text += f"⊚ @{member.user.username}\n"
-        else:
-            mention_text += f"⊚ {member.user.first_name}\n"
+
+    try:
+        async for member in context.bot.get_chat_members(chat.id):
+            if member.user.is_bot:
+                continue
+            if member.user.id in admin_ids:
+                continue  # Skip admins if you don't want to tag them
+            if member.user.username:
+                mention_text += f"⊚ @{member.user.username}\n"
+            else:
+                mention_text += f"⊚ {member.user.first_name}\n"
+    except Exception as e:
+        # Bot can't fetch all users (Telegram limits), so fallback:
+        await update.message.reply_text("Bot cannot fetch all group members (API limit). Tagging only admins!")
+        for admin in admins:
+            if admin.user.is_bot:
+                continue
+            if admin.user.username:
+                mention_text += f"⊚ @{admin.user.username}\n"
+            else:
+                mention_text += f"⊚ {admin.user.first_name}\n"
 
     if not mention_text:
         await update.message.reply_text("No members found to tag.")
@@ -473,7 +481,6 @@ async def stop_tagging(update: Update, context: ContextTypes.DEFAULT_TYPE):
     # Disable tagging
     group_tagging[chat.id] = False
     await update.message.reply_text("➥ Tagging turned off by /alloff")
-
 # Main function
 def main():
     application = Application.builder().token(API_TOKEN).build()
