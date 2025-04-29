@@ -609,6 +609,9 @@ async def unmute_user(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     await update.message.reply_text(f"🔊 Unmuted {user_to_unmute.mention_html()} successfully!", parse_mode="HTML")
 
+from telegram import InlineKeyboardMarkup, InlineKeyboardButton, Update
+from telegram.ext import ContextTypes
+
 # /kick command
 async def kick(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chat = update.effective_chat
