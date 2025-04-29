@@ -256,10 +256,21 @@ async def promote_user(update: Update, context: ContextTypes.DEFAULT_TYPE):
         user = update.message.reply_to_message.from_user
         user_id = user.id
     elif context.args:
-        user_id = int(context.args[0])
-        user = await context.bot.get_chat_member(update.effective_chat.id, user_id).user
+        user_input = context.args[0]
+        try:
+            if user_input.startswith("@"):
+                # Username diya gaya hai
+                user = await context.bot.get_chat(user_input)
+                user_id = user.id
+            else:
+                # User ID diya gaya hai
+                user_id = int(user_input)
+                user = await context.bot.get_chat_member(update.effective_chat.id, user_id).user
+        except Exception as e:
+            await update.message.reply_text(f"❌ Invalid user or username.\nError: {e}")
+            return
     else:
-        await update.message.reply_text("Please reply to a user or provide a user ID to promote.")
+        await update.message.reply_text("Please reply to a user or provide a user ID or username to promote.")
         return
 
     try:
@@ -275,19 +286,32 @@ async def promote_user(update: Update, context: ContextTypes.DEFAULT_TYPE):
             can_manage_video_chats=True,
             can_manage_chat=True
         )
-        await update.message.reply_text(f"Successfully promoted @{user.username} ✅")
+        await update.message.reply_text(f"✅ Successfully promoted @{user.username if user.username else user.first_name}")
     except Exception as e:
-        await update.message.reply_text(f"An error occurred while promoting the user: {e}")
+        await update.message.reply_text(f"❌ An error occurred while promoting the user:\n{e}")
+
+
 
 async def demote_user(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if update.message.reply_to_message:
         user = update.message.reply_to_message.from_user
         user_id = user.id
     elif context.args:
-        user_id = int(context.args[0])
-        user = await context.bot.get_chat_member(update.effective_chat.id, user_id).user
+        user_input = context.args[0]
+        try:
+            if user_input.startswith("@"):
+                # Username diya gaya hai
+                user = await context.bot.get_chat(user_input)
+                user_id = user.id
+            else:
+                # User ID diya gaya hai
+                user_id = int(user_input)
+                user = await context.bot.get_chat_member(update.effective_chat.id, user_id).user
+        except Exception as e:
+            await update.message.reply_text(f"❌ Invalid user or username.\nError: {e}")
+            return
     else:
-        await update.message.reply_text("Please reply to a user or provide a user ID to demote.")
+        await update.message.reply_text("Please reply to a user or provide a user ID or username to demote.")
         return
 
     try:
@@ -303,9 +327,9 @@ async def demote_user(update: Update, context: ContextTypes.DEFAULT_TYPE):
             can_manage_video_chats=False,
             can_manage_chat=False
         )
-        await update.message.reply_text(f"Successfully demoted @{user.username} ✅")
+        await update.message.reply_text(f"✅ Successfully demoted @{user.username if user.username else user.first_name}")
     except Exception as e:
-        await update.message.reply_text(f"An error occurred while demoting the user: {e}")
+        await update.message.reply_text(f"❌ An error occurred while demoting the user:\n{e}")
 
 async def id_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chat = update.effective_chat
