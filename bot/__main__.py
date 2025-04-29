@@ -394,6 +394,74 @@ async def broadcast(update: Update, context: ContextTypes.DEFAULT_TYPE):
         parse_mode=ParseMode.HTML
     )
 
+# Group tagging control
+group_tagging = {}
+
+# /all command
+async def tag_all(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    chat = update.effective_chat
+    sender = update.effective_user
+
+    # Check if used in group
+    if chat.type not in ["group", "supergroup"]:
+        await update.message.reply_text("This command only works in groups!")
+        return
+
+    # Check if sender is an admin
+    member = await chat.get_member(sender.id)
+    if not member.status in ["administrator", "creator"]:
+        await update.message.reply_text("Only admins are allowed to use this command.")
+        return
+
+    # Enable tagging for the group
+    group_tagging[chat.id] = True
+
+    # Fetch all group members (excluding bots)
+    members = []
+    async for member in context.bot.get_chat_administrators(chat.id):
+        if member.user.is_bot:
+            continue
+        members.append(member.user)
+
+    # Prepare the mention message
+    mention_text = ""
+    for user in members:
+        if user.username:
+            mention_text += f"⊚ @{user.username}\n"
+        else:
+            mention_text += f"⊚ {user.first_name}\n"
+
+    # Combine with original message text
+    original_text = update.message.text.replace('/all', '').replace('@all', '').strip()
+    final_text = f"{original_text}\n\n{mention_text}"
+
+    # Send message in parts if too long
+    if len(final_text) <= 4096:
+        await context.bot.send_message(chat_id=chat.id, text=final_text)
+    else:
+        for i in range(0, len(final_text), 4000):
+            await context.bot.send_message(chat_id=chat.id, text=final_text[i:i+4000])
+
+# /alloff command
+async def stop_tagging(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    chat = update.effective_chat
+    sender = update.effective_user
+
+    # Check if used in group
+    if chat.type not in ["group", "supergroup"]:
+        await update.message.reply_text("This command only works in groups!")
+        return
+
+    # Check if sender is an admin
+    member = await chat.get_member(sender.id)
+    if not member.status in ["administrator", "creator"]:
+        await update.message.reply_text("Only admins are allowed to use this command.")
+        return
+
+    # Disable tagging
+    group_tagging[chat.id] = False
+    await update.message.reply_text("➥ Tagging turned off by /alloff")
+
 # Main function
 def main():
     application = Application.builder().token(API_TOKEN).build()
@@ -409,6 +477,9 @@ def main():
     application.add_handler(CommandHandler("demote", demote_user))
     application.add_handler(CommandHandler("id", id_command))  
     application.add_handler(CommandHandler("broadcast", broadcast))  # <- Ye line sahi jagah aayi, same level par
+application.add_handler(CommandHandler(["all", "tagall"], tag_all))
+application.add_handler(CommandHandler("alloff", stop_tagging))
+
 
     # Run
     application.run_polling()
