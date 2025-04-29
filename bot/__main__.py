@@ -657,7 +657,6 @@ async def unmute_user(update: Update, context: ContextTypes.DEFAULT_TYPE):
 def main():
     application = Application.builder().token(API_TOKEN).build()
 
-    
     # Handlers
     application.add_handler(CommandHandler("start", start))
     application.add_handler(CallbackQueryHandler(button))
@@ -671,14 +670,14 @@ def main():
     application.add_handler(CommandHandler("broadcast", broadcast))  
     application.add_handler(CommandHandler(["all", "tagall"], tag_all))
     application.add_handler(CommandHandler("alloff", stop_tagging))
-    
-    # Yaha add karo warn/unwarn bhi properly
+
+    # Warn/unwarn handlers
     application.add_handler(CommandHandler("warn", warn))
     application.add_handler(CommandHandler("unwarn", unwarn))
 
-application.add_handler(CommandHandler("mute", mute_user))
-
-application.add_handler(CommandHandler("unmute", unmute_user))
+    # Mute/unmute handlers
+    application.add_handler(CommandHandler("mute", mute_user))
+    application.add_handler(CommandHandler("unmute", unmute_user))
 
     # Run
     application.run_polling()
