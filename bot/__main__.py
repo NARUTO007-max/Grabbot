@@ -609,6 +609,74 @@ async def unmute_user(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     await update.message.reply_text(f"🔊 Unmuted {user_to_unmute.mention_html()} successfully!", parse_mode="HTML")
 
+# /kick command
+async def kick(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    chat = update.effective_chat
+    sender = update.effective_user
+
+    # Check if used in group
+    if chat.type not in ["group", "supergroup"]:
+        await update.message.reply_text("This command only works in groups!")
+        return
+
+    member = await chat.get_member(sender.id)
+
+    # If normal member => kick themselves
+    if member.status not in ["administrator", "creator"]:
+        try:
+            await context.bot.ban_chat_member(chat_id=chat.id, user_id=sender.id)
+            await context.bot.unban_chat_member(chat_id=chat.id, user_id=sender.id)  # Unban for rejoin
+        except Exception as e:
+            await update.message.reply_text("Unable to kick you.")
+        return
+
+    # Admin usage
+    if not update.message.reply_to_message:
+        await update.message.reply_text("Please reply to a user's message to kick them.")
+        return
+
+    target_user = update.message.reply_to_message.from_user
+
+    if target_user.id == sender.id:
+        await update.message.reply_text("You cannot kick yourself like this, just use /kick alone.")
+        return
+
+    # Prepare Confirm/Cancel buttons
+    keyboard = [
+        [
+            InlineKeyboardButton("✅ Confirm", callback_data=f"confirm_kick:{target_user.id}"),
+            InlineKeyboardButton("❌ Cancel", callback_data="cancel_kick")
+        ]
+    ]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+
+    await update.message.reply_text(
+        f"⚡ Admin {sender.mention_html()} wants to kick {target_user.mention_html()}.\nAre you sure?",
+        reply_markup=reply_markup,
+        parse_mode="HTML"
+    )
+
+# Callback Query Handler
+async def kick_buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    query = update.callback_query
+    await query.answer()
+
+    data = query.data
+
+    if data == "cancel_kick":
+        await query.edit_message_text("❌ Kick cancelled.")
+        return
+
+    if data.startswith("confirm_kick:"):
+        user_id = int(data.split(":")[1])
+        chat = update.effective_chat
+        try:
+            await context.bot.ban_chat_member(chat_id=chat.id, user_id=user_id)
+            await context.bot.unban_chat_member(chat_id=chat.id, user_id=user_id)
+            await query.edit_message_text("✅ User kicked successfully!")
+        except Exception as e:
+            await query.edit_message_text("Failed to kick the user.")
+
 # Main function
 def main():
     application = Application.builder().token(API_TOKEN).build()
@@ -634,6 +702,10 @@ def main():
     # Mute/unmute handlers
     application.add_handler(CommandHandler("mute", mute_user))
     application.add_handler(CommandHandler("unmute", unmute_user))
+
+application.add_handler(CommandHandler("kick", kick))
+
+application.add_handler(CallbackQueryHandler(kick_buttons, pattern="^(confirm_kick|cancel_kick)"))
 
     # Run
     application.run_polling()
