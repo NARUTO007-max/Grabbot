@@ -14,12 +14,10 @@ users_collection = db["users"]   # Users collection (id, username, etc)
 broadcast_collection = db["broadcasts"]  # Optional for broadcast history (if you want)
 
 from datetime import datetime
-from pymongo import DESCENDING
 
 async def get_top_daily_users():
-    today = datetime.utcnow().date()
+    today = datetime.today()
 
-    # Filter for messages only from today
     pipeline = [
         {
             "$match": {
