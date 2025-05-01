@@ -1,51 +1,30 @@
-from pymongo import MongoClient
+import sqlite3
 
-# MongoDB URL (Replace with your connection string)
-MONGO_URL = "mongodb+srv://sufyan532011:2010@dbz.28ftn.mongodb.net/?retryWrites=true&w=majority&appName=DBZ"
+DB_NAME = "users.db"
 
-# Create a client
-client = MongoClient(MONGO_URL)
+def init_db():
+    conn = sqlite3.connect(DB_NAME)
+    c = conn.cursor()
+    c.execute('''
+        CREATE TABLE IF NOT EXISTS users (
+            chat_id INTEGER PRIMARY KEY,
+            chat_type TEXT
+        )
+    ''')
+    conn.commit()
+    conn.close()
 
-# Choose database name
-db = client["hinatax_support_bot"]
+def add_user(chat_id, chat_type="private"):
+    conn = sqlite3.connect(DB_NAME)
+    c = conn.cursor()
+    c.execute("INSERT OR IGNORE INTO users (chat_id, chat_type) VALUES (?, ?)", (chat_id, chat_type))
+    conn.commit()
+    conn.close()
 
-# Create collections
-users_collection = db["users"]   # Users collection (id, username, etc)
-broadcast_collection = db["broadcasts"]  # Optional for broadcast history (if you want)
-
-from datetime import datetime
-
-async def get_top_daily_users():
-    today = datetime.today()
-
-    pipeline = [
-        {
-            "$match": {
-                "last_message_date": {"$gte": datetime(today.year, today.month, today.day)}
-            }
-        },
-        {
-            "$project": {
-                "username": 1,
-                "daily_count": 1
-            }
-        },
-        {
-            "$sort": {"daily_count": -1}
-        },
-        {
-            "$limit": 10
-        }
-    ]
-
-    top_users_cursor = users_collection.aggregate(pipeline)
-    top_users = []
-    total_messages = 0
-
-    async for user in top_users_cursor:
-        username = user.get("username", "Unknown")
-        count = user.get("daily_count", 0)
-        top_users.append((username, count))
-        total_messages += count
-
-    return top_users, total_messages
+def get_all_chats():
+    conn = sqlite3.connect(DB_NAME)
+    c = conn.cursor()
+    c.execute("SELECT chat_id, chat_type FROM users")
+    chats = c.fetchall()
+    conn.close()
+    return chats
