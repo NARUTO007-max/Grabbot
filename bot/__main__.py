@@ -11,6 +11,69 @@ WELCOME_IMAGE = "https://files.catbox.moe/461mqe.jpg"
 ADMIN_IDS = [7019600964, 7985467870]  # <-- Replace with actual admin Telegram user IDs
 
 
+async def unban(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if update.effective_chat.type not in ["group", "supergroup"]:
+        await update.message.reply_text("❌ This command works only in group chats.")
+        return
+
+    chat_id = update.effective_chat.id
+
+    if update.message.reply_to_message:
+        user = update.message.reply_to_message.from_user
+    elif context.args:
+        try:
+            user = await context.bot.get_chat_member(chat_id, context.args[0])
+        except:
+            await update.message.reply_text("❌ Invalid username or user ID.")
+            return
+    else:
+        await update.message.reply_text("⚠️ Reply to a message or provide username/user ID to unban.")
+        return
+
+    user_id = user.id
+    try:
+        await context.bot.unban_chat_member(chat_id, user_id, only_if_banned=False)
+        await update.message.reply_text(
+            f"✅ {user.mention_html()} has been <b>unbanned</b>.",
+            parse_mode="HTML"
+        )
+    except Exception as e:
+        await update.message.reply_text(f"❌ Failed to unban: {e}")
+
+async def ban(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if update.effective_chat.type not in ["group", "supergroup"]:
+        await update.message.reply_text("❌ This command works only in group chats.")
+        return
+
+    chat_id = update.effective_chat.id
+
+    # From reply
+    if update.message.reply_to_message:
+        user = update.message.reply_to_message.from_user
+    elif context.args:
+        try:
+            user = await context.bot.get_chat_member(chat_id, context.args[0])
+        except:
+            await update.message.reply_text("❌ Invalid username or user ID.")
+            return
+    else:
+        await update.message.reply_text("⚠️ Reply to a message or provide username/user ID to ban.")
+        return
+
+    user_id = user.id
+    member = await context.bot.get_chat_member(chat_id, user_id)
+    if isinstance(member, ChatMemberAdministrator) or isinstance(member, ChatMemberOwner):
+        await update.message.reply_text("❌ You cannot ban group admins.")
+        return
+
+    try:
+        await context.bot.ban_chat_member(chat_id, user_id)
+        await update.message.reply_text(
+            f"✅ {user.mention_html()} has been <b>banned</b>.",
+            parse_mode="HTML"
+        )
+    except Exception as e:
+        await update.message.reply_text(f"❌ Failed to ban: {e}")
 
 def warn_user(user_id, chat_id):
     conn = sqlite3.connect("users.db")
@@ -161,7 +224,9 @@ def main():
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CommandHandler("broadcast", broadcast))
     app.add_handler(CommandHandler("warn", warn))
-    app.add_handler(CommandHandler("unwarn", unwarn))  # <-- Yeh line yahan andar honi chahiye
+    app.add_handler(CommandHandler("unwarn", unwarn))
+    app.add_handler(CommandHandler("ban", ban))      # <- Yeh line andar aayi
+    app.add_handler(CommandHandler("unban", unban))  # <- Yeh bhi
 
     app.run_polling()
 
