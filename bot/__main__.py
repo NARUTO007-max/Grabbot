@@ -42,7 +42,7 @@ async def start_command(client, message: Message):
 ᴍᴜsᴛ Jᴏɪɴ :- @animaction_world_in_2025
         """,
         reply_markup=InlineKeyboardMarkup([
-            [InlineKeyboardButton("➕ ᴀᴅᴅ ᴍᴇ ᴛᴏ ɢʀᴏᴜᴘ", url="https://t.me/HinataXSupportbot?startgroup=true")],
+            [InlineKeyboardButton("〔 ＋ ᴀᴅᴅ ᴍᴇ ᴛᴏ ɢʀᴏᴜᴘ 〕", url="https://t.me/HinataXSupportbot?startgroup=true")],
             [
                 InlineKeyboardButton("🥀 ᴏᴡɴᴇʀ 🥀", url="https://t.me/Uzumaki_X_Naruto_6"),
                 InlineKeyboardButton("🥀 ɢʀᴏᴜᴘ 🥀", url="https://t.me/animaction_world_in_2025")
