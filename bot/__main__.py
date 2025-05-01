@@ -5,7 +5,7 @@ from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
 import bot.db as db
 
 API_TOKEN = "7608107574:AAGMrCB5b3O5vJJNvu07cQ8vsmkzRksjN74"
-WELCOME_IMAGE = "https://files.catbox.moe/9eehwa.jpg"
+WELCOME_IMAGE = "https://files.catbox.moe/461mqe.jpg"
 
 # Add your Telegram user IDs here
 ADMIN_IDS = [7019600964, 7985467870]  # <-- Replace with actual admin Telegram user IDs
@@ -81,7 +81,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     buttons = [
         [
-            InlineKeyboardButton("🥀 𝙊𝙬𝙣𝙚𝙧", url="https://t.me/SubunfromHeart"),
+            InlineKeyboardButton("🥀 𝙊𝙬𝙣𝙚𝙧", url="https://t.me/Uzumaki_X_Naruto_6"),
             InlineKeyboardButton("🥀 𝙂𝙧𝙤𝙪𝙥", url="https://t.me/animaction_world_in_2025"),
         ],
         [InlineKeyboardButton("🥀 𝘼𝙙𝙙 𝙈𝙚 𝙏𝙤 𝙂𝙧𝙤𝙪𝙥", url=f"https://t.me/{context.bot.username}?startgroup=true")]
