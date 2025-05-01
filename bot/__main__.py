@@ -21,7 +21,7 @@ async def start_command(client, message: Message):
     add_user(user.id, user.username, user.first_name)
 
     # Send Goku sticker first
-    sticker_msg = await message.reply_sticker("CAACAgUAAxkBAAEICFFmX_kX5f1JZNNgVK7WLPc6TcAdJgACnQIAApUo8VSVgyfSh-dAEi8E")
+    sticker_msg = await message.reply_sticker("AAMCBQADGQEB9xo2aBOj5GR1YWM1VK8Ysek53AHOwtAAAtgPAALzaqlVyYnBbDn1GU4BAAdtAAM2BA")
 
     # Wait then delete sticker
     await asyncio.sleep(2)
