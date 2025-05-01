@@ -161,6 +161,7 @@ def main():
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CommandHandler("broadcast", broadcast))
     app.add_handler(CommandHandler("warn", warn))
+    app.add_handler(CommandHandler("unwarn", unwarn))  # <-- Yeh line yahan andar honi chahiye
 
     app.run_polling()
 
