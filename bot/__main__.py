@@ -1,6 +1,6 @@
 from pyrogram import Client, filters
 from pyrogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton
-from Bot.db import init_db, add_user
+from bot.db import init_db, add_user
 import asyncio
 
 # Init DB
