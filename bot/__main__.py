@@ -63,6 +63,36 @@ async def warn(update: Update, context: ContextTypes.DEFAULT_TYPE):
             parse_mode="HTML"
         )
 
+async def unwarn(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if update.effective_chat.type not in ["group", "supergroup"]:
+        await update.message.reply_text("❌ This command works only in group chats.")
+        return
+
+    if not update.message.reply_to_message:
+        await update.message.reply_text("⚠️ Reply to a user's message to unwarn them.")
+        return
+
+    user = update.message.reply_to_message.from_user
+    user_id = user.id
+    chat_id = update.effective_chat.id
+
+    conn = sqlite3.connect("users.db")
+    c = conn.cursor()
+    c.execute("SELECT warns FROM warnings WHERE user_id = ? AND chat_id = ?", (user_id, chat_id))
+    result = c.fetchone()
+
+    if result and result[0] > 0:
+        new_warns = result[0] - 1
+        c.execute("UPDATE warnings SET warns = ? WHERE user_id = ? AND chat_id = ?", (new_warns, user_id, chat_id))
+        conn.commit()
+        await update.message.reply_text(
+            f"✅ {user.mention_html()} has been unwarned ({new_warns}/3).",
+            parse_mode="HTML"
+        )
+    else:
+        await update.message.reply_text("⚠️ This user has no warnings.")
+    conn.close()
+
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chat_id = update.effective_chat.id
     chat_type = update.effective_chat.type
