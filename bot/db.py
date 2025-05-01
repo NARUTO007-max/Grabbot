@@ -1,30 +1,52 @@
 import sqlite3
 
-DB_NAME = "users.db"
+conn = sqlite3.connect("waifu.db", check_same_thread=False)
+cur = conn.cursor()
 
 def init_db():
-    conn = sqlite3.connect(DB_NAME)
-    c = conn.cursor()
-    c.execute('''
+    cur.execute("""
         CREATE TABLE IF NOT EXISTS users (
-            chat_id INTEGER PRIMARY KEY,
-            chat_type TEXT
+            user_id INTEGER PRIMARY KEY,
+            username TEXT,
+            full_name TEXT,
+            total_waifus INTEGER DEFAULT 0,
+            gifted INTEGER DEFAULT 0,
+            received INTEGER DEFAULT 0
         )
-    ''')
+    """)
+    
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS waifus (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT,
+            anime TEXT,
+            image TEXT,
+            hint TEXT
+        )
+    """)
+    
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS user_waifus (
+            user_id INTEGER,
+            waifu_id INTEGER,
+            timestamp TEXT,
+            FOREIGN KEY(user_id) REFERENCES users(user_id),
+            FOREIGN KEY(waifu_id) REFERENCES waifus(id)
+        )
+    """)
+    
     conn.commit()
-    conn.close()
 
-def add_user(chat_id, chat_type="private"):
-    conn = sqlite3.connect(DB_NAME)
-    c = conn.cursor()
-    c.execute("INSERT OR IGNORE INTO users (chat_id, chat_type) VALUES (?, ?)", (chat_id, chat_type))
+def add_user(user_id, username, full_name):
+    cur.execute("INSERT OR IGNORE INTO users (user_id, username, full_name) VALUES (?, ?, ?)", (user_id, username, full_name))
     conn.commit()
-    conn.close()
 
-def get_all_chats():
-    conn = sqlite3.connect(DB_NAME)
-    c = conn.cursor()
-    c.execute("SELECT chat_id, chat_type FROM users")
-    chats = c.fetchall()
-    conn.close()
-    return chats
+def get_user_waifus(user_id):
+    cur.execute("""
+        SELECT w.name, w.anime, w.image
+        FROM user_waifus uw
+        JOIN waifus w ON uw.waifu_id = w.id
+        WHERE uw.user_id = ?
+        ORDER BY uw.timestamp DESC
+    """, (user_id,))
+    return cur.fetchall()
