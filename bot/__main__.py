@@ -9,9 +9,9 @@ init_db()
 # Bot instance
 app = Client(
     "waifu_guess_bot",
-    api_id=123456,  # Replace with your actual api_id
-    api_hash="your_api_hash",
-    bot_token="your_bot_token"
+    api_id=25698862,  # Replace with your actual api_id
+    api_hash="7d7739b44f5f8c825d48cc6787889dbc",
+    bot_token="7608107574:AAH_PGTsl7ua9IY9C1GQOz5qdU8XjXATH80"
 )
 
 # /start command
@@ -29,7 +29,7 @@ async def start_command(client, message: Message):
 
     # Send welcome image with buttons
     await message.reply_photo(
-        photo="https://telegra.ph/file/6da041da9edee75f2aafe.jpg",  # Replace with your image
+        photo="https://files.catbox.moe/461mqe.jpg",  # Replace with your image
         caption=f"**Welcome {user.first_name} to Waifu Guess World!**\nGuess waifus, collect, gift, and trade them!",
         reply_markup=InlineKeyboardMarkup([
             [InlineKeyboardButton("➕ Add Me to Group", url="https://t.me/YourBotUsername?startgroup=true")],
