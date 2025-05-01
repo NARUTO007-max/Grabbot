@@ -4,7 +4,7 @@ from telegram import ChatMemberAdministrator, ChatMemberOwner
 from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
 import bot.db as db
 
-API_TOKEN = "7608107574:AAGMrCB5b3O5vJJNvu07cQ8vsmkzRksjN74"
+API_TOKEN = "7608107574:AAH_PGTsl7ua9IY9C1GQOz5qdU8XjXATH80"
 WELCOME_IMAGE = "https://files.catbox.moe/461mqe.jpg"
 
 # Add your Telegram user IDs here
