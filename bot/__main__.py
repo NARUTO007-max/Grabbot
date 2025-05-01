@@ -9,7 +9,9 @@ WELCOME_IMAGE = "https://files.catbox.moe/9eehwa.jpg"
 # Add your Telegram user IDs here
 ADMIN_IDS = [7019600964, 7985467870]  # <-- Replace with actual admin Telegram user IDs
 
-async def warn_user(user_id, chat_id):
+
+
+def warn_user(user_id, chat_id):
     conn = sqlite3.connect("users.db")
     c = conn.cursor()
     c.execute("CREATE TABLE IF NOT EXISTS warnings (user_id INTEGER, chat_id INTEGER, warns INTEGER, PRIMARY KEY(user_id, chat_id))")
@@ -48,11 +50,17 @@ async def warn(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if warns >= 3:
         try:
             await context.bot.ban_chat_member(chat_id=chat_id, user_id=user_id)
-            await update.message.reply_text(f"⚠️ {warned_user.mention_html()} has been banned after 3 warnings.", parse_mode="HTML")
+            await update.message.reply_text(
+                f"⚠️ {warned_user.mention_html()} has been banned after 3 warnings.",
+                parse_mode="HTML"
+            )
         except Exception as e:
             await update.message.reply_text(f"❌ Failed to ban: {e}")
     else:
-        await update.message.reply_text(f"⚠️ {warned_user.mention_html()} has been warned ({warns}/3).", parse_mode="HTML")
+        await update.message.reply_text(
+            f"⚠️ {warned_user.mention_html()} has been warned ({warns}/3).",
+            parse_mode="HTML"
+        )
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chat_id = update.effective_chat.id
