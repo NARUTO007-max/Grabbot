@@ -1,234 +1,44 @@
-import sqlite3
-from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
-from telegram import ChatMemberAdministrator, ChatMemberOwner
-from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
-import bot.db as db
+from pyrogram import Client, filters
+from pyrogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton
+from Bot.db import init_db, add_user
+import asyncio
 
-API_TOKEN = "7608107574:AAH_PGTsl7ua9IY9C1GQOz5qdU8XjXATH80"
-WELCOME_IMAGE = "https://files.catbox.moe/461mqe.jpg"
+# Init DB
+init_db()
 
-# Add your Telegram user IDs here
-ADMIN_IDS = [7019600964, 7985467870]  # <-- Replace with actual admin Telegram user IDs
+# Bot instance
+app = Client(
+    "waifu_guess_bot",
+    api_id=123456,  # Replace with your actual api_id
+    api_hash="your_api_hash",
+    bot_token="your_bot_token"
+)
 
+# /start command
+@app.on_message(filters.command("start"))
+async def start_command(client, message: Message):
+    user = message.from_user
+    add_user(user.id, user.username, user.first_name)
 
-async def unban(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    if update.effective_chat.type not in ["group", "supergroup"]:
-        await update.message.reply_text("❌ This command works only in group chats.")
-        return
+    # Send Goku sticker first
+    sticker_msg = await message.reply_sticker("CAACAgUAAxkBAAEICFFmX_kX5f1JZNNgVK7WLPc6TcAdJgACnQIAApUo8VSVgyfSh-dAEi8E")
 
-    chat_id = update.effective_chat.id
+    # Wait then delete sticker
+    await asyncio.sleep(2)
+    await sticker_msg.delete()
 
-    if update.message.reply_to_message:
-        user = update.message.reply_to_message.from_user
-    elif context.args:
-        try:
-            user = await context.bot.get_chat_member(chat_id, context.args[0])
-        except:
-            await update.message.reply_text("❌ Invalid username or user ID.")
-            return
-    else:
-        await update.message.reply_text("⚠️ Reply to a message or provide username/user ID to unban.")
-        return
-
-    user_id = user.id
-    try:
-        await context.bot.unban_chat_member(chat_id, user_id, only_if_banned=False)
-        await update.message.reply_text(
-            f"✅ {user.mention_html()} has been <b>unbanned</b>.",
-            parse_mode="HTML"
-        )
-    except Exception as e:
-        await update.message.reply_text(f"❌ Failed to unban: {e}")
-
-async def ban(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    if update.effective_chat.type not in ["group", "supergroup"]:
-        await update.message.reply_text("❌ This command works only in group chats.")
-        return
-
-    chat_id = update.effective_chat.id
-
-    # From reply
-    if update.message.reply_to_message:
-        user = update.message.reply_to_message.from_user
-    elif context.args:
-        try:
-            user = await context.bot.get_chat_member(chat_id, context.args[0])
-        except:
-            await update.message.reply_text("❌ Invalid username or user ID.")
-            return
-    else:
-        await update.message.reply_text("⚠️ Reply to a message or provide username/user ID to ban.")
-        return
-
-    user_id = user.id
-    member = await context.bot.get_chat_member(chat_id, user_id)
-    if isinstance(member, ChatMemberAdministrator) or isinstance(member, ChatMemberOwner):
-        await update.message.reply_text("❌ You cannot ban group admins.")
-        return
-
-    try:
-        await context.bot.ban_chat_member(chat_id, user_id)
-        await update.message.reply_text(
-            f"✅ {user.mention_html()} has been <b>banned</b>.",
-            parse_mode="HTML"
-        )
-    except Exception as e:
-        await update.message.reply_text(f"❌ Failed to ban: {e}")
-
-def warn_user(user_id, chat_id):
-    conn = sqlite3.connect("users.db")
-    c = conn.cursor()
-    c.execute("CREATE TABLE IF NOT EXISTS warnings (user_id INTEGER, chat_id INTEGER, warns INTEGER, PRIMARY KEY(user_id, chat_id))")
-    c.execute("SELECT warns FROM warnings WHERE user_id = ? AND chat_id = ?", (user_id, chat_id))
-    result = c.fetchone()
-    if result:
-        warns = result[0] + 1
-        c.execute("UPDATE warnings SET warns = ? WHERE user_id = ? AND chat_id = ?", (warns, user_id, chat_id))
-    else:
-        warns = 1
-        c.execute("INSERT INTO warnings (user_id, chat_id, warns) VALUES (?, ?, ?)", (user_id, chat_id, warns))
-    conn.commit()
-    conn.close()
-    return warns
-
-async def warn(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    if update.effective_chat.type not in ["group", "supergroup"]:
-        await update.message.reply_text("❌ This command works only in group chats.")
-        return
-
-    if not update.message.reply_to_message:
-        await update.message.reply_text("⚠️ Reply to a user's message to warn them.")
-        return
-
-    warned_user = update.message.reply_to_message.from_user
-    chat_id = update.effective_chat.id
-    user_id = warned_user.id
-
-    member = await context.bot.get_chat_member(chat_id, user_id)
-    if isinstance(member, ChatMemberAdministrator) or isinstance(member, ChatMemberOwner):
-        await update.message.reply_text("❌ You cannot warn group admins.")
-        return
-
-    warns = warn_user(user_id, chat_id)
-
-    if warns >= 3:
-        try:
-            await context.bot.ban_chat_member(chat_id=chat_id, user_id=user_id)
-            await update.message.reply_text(
-                f"⚠️ {warned_user.mention_html()} has been banned after 3 warnings.",
-                parse_mode="HTML"
-            )
-        except Exception as e:
-            await update.message.reply_text(f"❌ Failed to ban: {e}")
-    else:
-        await update.message.reply_text(
-            f"⚠️ {warned_user.mention_html()} has been warned ({warns}/3).",
-            parse_mode="HTML"
-        )
-
-async def unwarn(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    if update.effective_chat.type not in ["group", "supergroup"]:
-        await update.message.reply_text("❌ This command works only in group chats.")
-        return
-
-    if not update.message.reply_to_message:
-        await update.message.reply_text("⚠️ Reply to a user's message to unwarn them.")
-        return
-
-    user = update.message.reply_to_message.from_user
-    user_id = user.id
-    chat_id = update.effective_chat.id
-
-    conn = sqlite3.connect("users.db")
-    c = conn.cursor()
-    c.execute("SELECT warns FROM warnings WHERE user_id = ? AND chat_id = ?", (user_id, chat_id))
-    result = c.fetchone()
-
-    if result and result[0] > 0:
-        new_warns = result[0] - 1
-        c.execute("UPDATE warnings SET warns = ? WHERE user_id = ? AND chat_id = ?", (new_warns, user_id, chat_id))
-        conn.commit()
-        await update.message.reply_text(
-            f"✅ {user.mention_html()} has been unwarned ({new_warns}/3).",
-            parse_mode="HTML"
-        )
-    else:
-        await update.message.reply_text("⚠️ This user has no warnings.")
-    conn.close()
-
-async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    chat_id = update.effective_chat.id
-    chat_type = update.effective_chat.type
-    db.add_user(chat_id, chat_type)  # Make sure this function avoids duplicates
-
-    caption = (
-        f"✨ ᴡᴇʟᴄᴏᴍᴇ {update.effective_user.mention_html()} ᴛᴏ <b>HinataX Support Bot!</b>\n\n"
-        "Your smart assistant for group safety & fun!\n\n"
-        "⚡ <b>Features Include:</b>\n"
-        "• Auto-Moderation & Filters\n"
-        "• Welcome / Goodbye Messages\n"
-        "• Anti-Spam, Mute, Kick, Ban\n"
-        "• Fun & Utility Tools\n"
-        "• 24/7 Reliable Support"
+    # Send welcome image with buttons
+    await message.reply_photo(
+        photo="https://telegra.ph/file/6da041da9edee75f2aafe.jpg",  # Replace with your image
+        caption=f"**Welcome {user.first_name} to Waifu Guess World!**\nGuess waifus, collect, gift, and trade them!",
+        reply_markup=InlineKeyboardMarkup([
+            [InlineKeyboardButton("➕ Add Me to Group", url="https://t.me/YourBotUsername?startgroup=true")],
+            [
+                InlineKeyboardButton("👑 Owner", url="https://t.me/YourUsername"),
+                InlineKeyboardButton("❓ Help", callback_data="help")
+            ]
+        ])
     )
 
-    buttons = [
-        [
-            InlineKeyboardButton("🥀 𝙊𝙬𝙣𝙚𝙧", url="https://t.me/Uzumaki_X_Naruto_6"),
-            InlineKeyboardButton("🥀 𝙂𝙧𝙤𝙪𝙥", url="https://t.me/animaction_world_in_2025"),
-        ],
-        [InlineKeyboardButton("🥀 𝘼𝙙𝙙 𝙈𝙚 𝙏𝙤 𝙂𝙧𝙤𝙪𝙥", url=f"https://t.me/{context.bot.username}?startgroup=true")]
-    ]
-    reply_markup = InlineKeyboardMarkup(buttons)
-
-    await context.bot.send_photo(
-        chat_id=chat_id,
-        photo=WELCOME_IMAGE,
-        caption=caption,
-        reply_markup=reply_markup,
-        parse_mode="HTML"
-    )
-
-async def broadcast(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    user_id = update.effective_user.id
-    if user_id not in ADMIN_IDS:
-        await update.message.reply_text("❌ Only admins can use this command.")
-        return
-
-    message = " ".join(context.args).strip()
-    if not message:
-        await update.message.reply_text("⚠️ Please provide a message to broadcast.")
-        return
-
-    chats = db.get_all_chats()
-    success = 0
-    failed = 0
-
-    for chat_id, chat_type in chats:
-        try:
-            if chat_type in ["group", "supergroup"]:
-                await context.bot.send_message(chat_id=chat_id, text=f"📢 <b>Group Broadcast</b>\n\n{message}", parse_mode="HTML")
-            else:
-                await context.bot.send_message(chat_id=chat_id, text=message)
-            success += 1
-        except Exception as e:
-            print(f"Failed to send to {chat_id} ({chat_type}): {e}")
-            failed += 1
-
-    await update.message.reply_text(f"✅ Broadcast complete!\n\nSent: {success}\nFailed: {failed}")
-
-def main():
-    db.init_db()
-    app = ApplicationBuilder().token(API_TOKEN).build()
-
-    app.add_handler(CommandHandler("start", start))
-    app.add_handler(CommandHandler("broadcast", broadcast))
-    app.add_handler(CommandHandler("warn", warn))
-    app.add_handler(CommandHandler("unwarn", unwarn))
-    app.add_handler(CommandHandler("ban", ban))      # <- Yeh line andar aayi
-    app.add_handler(CommandHandler("unban", unban))  # <- Yeh bhi
-
-    app.run_polling()
-
-if __name__ == "__main__":
-    main()
+# Run the bot
+app.run()
