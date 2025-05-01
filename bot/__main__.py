@@ -50,5 +50,51 @@ async def start_command(client, message: Message):
         ])
     )
 
+RARITY_EMOJIS = {
+    "orange": "🟠",
+    "yellow": "🟡",
+    "red": "🔴"
+}
+
+# /mywaifu command
+@app.on_message(filters.command("mywaifu"))
+async def mywaifu_command(client, message: Message):
+    user_id = message.from_user.id
+    first_name = message.from_user.first_name
+
+    waifus = get_user_waifus(user_id)
+
+    if not waifus:
+        await message.reply(f"**{first_name}** has no waifus yet!")
+        return
+
+    # Group by series
+    series_dict = {}
+    for entry in waifus:
+        series = entry["series"]
+        if series not in series_dict:
+            series_dict[series] = []
+        series_dict[series].append(entry)
+
+    text = f"*{first_name}'s Harem*\n"
+    for series, chars in series_dict.items():
+        total = sum(c["quantity"] for c in chars)
+        text += f"\n⥱ {series} {total}/{len(chars)}\n"
+        text += "⚋" * 15 + "\n"
+        for c in chars:
+            emoji = RARITY_EMOJIS.get(c["rarity"], "")
+            group_tag = " [👥]" if c["is_group"] else ""
+            text += f"➥ {c['char_id']} | {emoji} | {c['name']}{group_tag} x{c['quantity']}\n"
+        text += "⚋" * 15 + "\n"
+
+    # Add pagination buttons (for now static, later dynamic)
+    keyboard = InlineKeyboardMarkup([[
+        InlineKeyboardButton("1x⬅️", callback_data="prev_page_1"),
+        InlineKeyboardButton("1/1", callback_data="page_info"),
+        InlineKeyboardButton("1x➡️", callback_data="next_page_1")
+    ]])
+
+    await message.reply(text, reply_markup=keyboard)
+
 # Run the bot
 app.run()
