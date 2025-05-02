@@ -330,5 +330,31 @@ async def guess_handler(client, message: Message):
         parse_mode="markdown"
     )
 
+# /mycollection command 
+@app.on_message(filters.command("mycollection"))
+async def mycollection_handler(client, message: Message):
+    user_id = message.from_user.id
+    username = message.from_user.first_name
+    waifus = user_waifus.get(user_id, [])
+
+    if not waifus:
+        return await message.reply("❌ You haven't earned any waifus yet. Start guessing using /guess!")
+
+    # Group by anime
+    grouped = defaultdict(list)
+    for w in waifus:
+        grouped[w['anime']].append(w)
+
+    # Format output
+    response = f"**{username}**'s Harem\n\n"
+    for anime, chars in grouped.items():
+        response += f"⥱ {anime} {len(chars)}/{len(chars)}\n"
+        response += "⚋" * 15 + "\n"
+        for w in chars:
+            response += f"➥ {w['id']} | {w['rarity']} | {w['name']} x1\n"
+        response += "⚋" * 15 + "\n\n"
+
+    await message.reply(response)
+
 # Run the bot
 app.run()
