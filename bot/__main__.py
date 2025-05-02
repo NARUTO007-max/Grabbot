@@ -1,4 +1,5 @@
 from pyrogram import Client, filters
+from pyrogram.types import CallbackQuery
 from pyrogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton
 from bot.db import init_db, add_user, get_user_waifus, get_waifu_by_user, update_waifu_quantity, add_or_update_waifu
 import asyncio
