@@ -2,6 +2,7 @@ import sqlite3
 
 # DB connection
 conn = sqlite3.connect("waifu.db", check_same_thread=False)
+conn.row_factory = sqlite3.Row  # Yeh line dictionary-style row access ke liye
 cur = conn.cursor()
 
 # Rarity emoji mapping
@@ -15,45 +16,44 @@ RARITY_EMOJIS = {
 
 # DB initialization
 def init_db():
-    cur.execute("""
-        CREATE TABLE IF NOT EXISTS users (
-            user_id INTEGER PRIMARY KEY,
-            username TEXT,
-            full_name TEXT,
-            total_waifus INTEGER DEFAULT 0,
-            gifted INTEGER DEFAULT 0,
-            received INTEGER DEFAULT 0
-        )
-    """)
-
-    cur.execute("""
-        CREATE TABLE IF NOT EXISTS waifus (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            name TEXT,
-            anime TEXT,
-            image TEXT,
-            hint TEXT,
-            rarity TEXT CHECK(rarity IN ('Common', 'Rare', 'Epic', 'Legendary', 'Special Edition'))
-        )
-    """)
-
-    cur.execute("""
-        CREATE TABLE IF NOT EXISTS user_waifus (
-            user_id INTEGER,
-            waifu_id INTEGER,
-            timestamp TEXT,
-            FOREIGN KEY(user_id) REFERENCES users(user_id),
-            FOREIGN KEY(waifu_id) REFERENCES waifus(id)
-        )
-    """)
-
-    conn.commit()
+    with conn:
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS users (
+                user_id INTEGER PRIMARY KEY,
+                username TEXT,
+                full_name TEXT,
+                total_waifus INTEGER DEFAULT 0,
+                gifted INTEGER DEFAULT 0,
+                received INTEGER DEFAULT 0
+            )
+        """)
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS waifus (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                name TEXT,
+                anime TEXT,
+                image TEXT,
+                hint TEXT,
+                rarity TEXT CHECK(rarity IN ('Common', 'Rare', 'Epic', 'Legendary', 'Special Edition'))
+            )
+        """)
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS user_waifus (
+                user_id INTEGER,
+                waifu_id INTEGER,
+                timestamp TEXT,
+                FOREIGN KEY(user_id) REFERENCES users(user_id),
+                FOREIGN KEY(waifu_id) REFERENCES waifus(id)
+            )
+        """)
 
 # Add user to DB
 def add_user(user_id, username, full_name):
-    cur.execute("INSERT OR IGNORE INTO users (user_id, username, full_name) VALUES (?, ?, ?)",
-                (user_id, username, full_name))
-    conn.commit()
+    with conn:
+        cur.execute("""
+            INSERT OR IGNORE INTO users (user_id, username, full_name)
+            VALUES (?, ?, ?)
+        """, (user_id, username, full_name))
 
 # Get waifus owned by user
 def get_user_waifus(user_id):
@@ -64,18 +64,20 @@ def get_user_waifus(user_id):
         WHERE uw.user_id = ?
         ORDER BY uw.timestamp DESC
     """, (user_id,))
-    return cur.fetchall()
+    return [dict(row) for row in cur.fetchall()]
 
 # Add waifu to DB
 def add_waifu(name, anime, image, hint, rarity):
-    cur.execute("""
-        INSERT INTO waifus (name, anime, image, hint, rarity)
-        VALUES (?, ?, ?, ?, ?)
-    """, (name, anime, image, hint, rarity))
-    conn.commit()
+    with conn:
+        cur.execute("""
+            INSERT INTO waifus (name, anime, image, hint, rarity)
+            VALUES (?, ?, ?, ?, ?)
+        """, (name, anime, image, hint, rarity))
 
 # Assign waifu to user
 def assign_waifu_to_user(user_id, waifu_id, timestamp):
-    cur.execute("INSERT INTO user_waifus (user_id, waifu_id, timestamp) VALUES (?, ?, ?)",
-                (user_id, waifu_id, timestamp))
-    conn.commit()
+    with conn:
+        cur.execute("""
+            INSERT INTO user_waifus (user_id, waifu_id, timestamp)
+            VALUES (?, ?, ?)
+        """, (user_id, waifu_id, timestamp))
