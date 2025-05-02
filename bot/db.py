@@ -1,8 +1,9 @@
 import sqlite3
+from datetime import datetime
 
 # DB connection
 conn = sqlite3.connect("waifu.db", check_same_thread=False)
-conn.row_factory = sqlite3.Row  # Yeh line dictionary-style row access ke liye
+conn.row_factory = sqlite3.Row
 cur = conn.cursor()
 
 # Rarity emoji mapping
@@ -42,8 +43,10 @@ def init_db():
                 user_id INTEGER,
                 waifu_id INTEGER,
                 timestamp TEXT,
+                quantity INTEGER DEFAULT 1,
                 FOREIGN KEY(user_id) REFERENCES users(user_id),
-                FOREIGN KEY(waifu_id) REFERENCES waifus(id)
+                FOREIGN KEY(waifu_id) REFERENCES waifus(id),
+                PRIMARY KEY(user_id, waifu_id)
             )
         """)
 
@@ -58,7 +61,7 @@ def add_user(user_id, username, full_name):
 # Get waifus owned by user
 def get_user_waifus(user_id):
     cur.execute("""
-        SELECT w.name, w.anime, w.image, w.rarity
+        SELECT w.id, w.name, w.anime, w.image, w.rarity, uw.quantity
         FROM user_waifus uw
         JOIN waifus w ON uw.waifu_id = w.id
         WHERE uw.user_id = ?
@@ -75,9 +78,44 @@ def add_waifu(name, anime, image, hint, rarity):
         """, (name, anime, image, hint, rarity))
 
 # Assign waifu to user
-def assign_waifu_to_user(user_id, waifu_id, timestamp):
+def assign_waifu_to_user(user_id, waifu_id, timestamp=None):
+    if not timestamp:
+        timestamp = datetime.utcnow().isoformat()
     with conn:
         cur.execute("""
-            INSERT INTO user_waifus (user_id, waifu_id, timestamp)
-            VALUES (?, ?, ?)
+            INSERT OR IGNORE INTO user_waifus (user_id, waifu_id, timestamp, quantity)
+            VALUES (?, ?, ?, 1)
         """, (user_id, waifu_id, timestamp))
+        cur.execute("""
+            UPDATE user_waifus
+            SET quantity = quantity + 1
+            WHERE user_id = ? AND waifu_id = ?
+        """, (user_id, waifu_id))
+
+# Get waifu by user ID and waifu ID
+def get_waifu_by_user(user_id, waifu_id):
+    cur.execute("""
+        SELECT *
+        FROM user_waifus
+        WHERE user_id = ? AND waifu_id = ?
+    """, (user_id, waifu_id))
+    return cur.fetchone()
+
+# Update waifu quantity
+def update_waifu_quantity(user_id, waifu_id, quantity):
+    with conn:
+        cur.execute("""
+            UPDATE user_waifus
+            SET quantity = ?
+            WHERE user_id = ? AND waifu_id = ?
+        """, (quantity, user_id, waifu_id))
+
+# Add or update waifu for user
+def add_or_update_waifu(user_id, waifu_id, timestamp=None):
+    if not timestamp:
+        timestamp = datetime.utcnow().isoformat()
+    existing = get_waifu_by_user(user_id, waifu_id)
+    if existing:
+        update_waifu_quantity(user_id, waifu_id, existing['quantity'] + 1)
+    else:
+        assign_waifu_to_user(user_id, waifu_id, timestamp)
