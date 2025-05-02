@@ -51,9 +51,11 @@ async def start_command(client, message: Message):
     )
 
 RARITY_EMOJIS = {
-    "orange": "🟠",
-    "yellow": "🟡",
-    "red": "🔴"
+    "Common": "⚪️",
+    "Rare": "🔵",
+    "Epic": "🟣",
+    "Legendary": "🟡",
+    "Special Edition": "💮"
 }
 
 # /mywaifu command
@@ -255,7 +257,7 @@ async def reject_trade_callback(client, callback_query):
     await callback_query.message.edit("❌ Trade Rejected.")
 
 # /upload and /guess command 
-RARITY_MAP = {"1": "🟢", "2": "🟠", "3": "🟡", "4": "🔴", "5": "🟣"}
+RARITY_MAP = {"1": "🟢", "2": "🟠", "3": "🟡", "4": "🔴", "5": "💮"}
 
 guess_data = {}  # temp memory, DB recommended for real usage
 
