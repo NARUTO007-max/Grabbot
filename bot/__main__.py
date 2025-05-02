@@ -204,12 +204,12 @@ cur = conn.cursor()
 # User upload state tracking
 user_upload_state = {}
 
-@bot.on_message(filters.command("upload") & filters.private)
+@app.on_message(filters.command("upload") & filters.private)
 async def upload_step1(client, message: Message):
     user_upload_state[message.from_user.id] = {"step": 1}
     await message.reply("Send waifu photo.")
 
-@bot.on_message(filters.photo & filters.private)
+@app.on_message(filters.photo & filters.private)
 async def upload_step2(client, message: Message):
     state = user_upload_state.get(message.from_user.id)
     if state and state["step"] == 1:
@@ -217,7 +217,7 @@ async def upload_step2(client, message: Message):
         user_upload_state[message.from_user.id]["step"] = 2
         await message.reply("Send waifu name.")
 
-@bot.on_message(filters.text & filters.private)
+@app.on_message(filters.text & filters.private)
 async def upload_step3(client, message: Message):
     state = user_upload_state.get(message.from_user.id)
     if not state: return
@@ -244,7 +244,7 @@ async def upload_step3(client, message: Message):
         del user_upload_state[message.from_user.id]
         await message.reply("Waifu uploaded successfully!")
 
-@bot.on_callback_query(filters.regex("rarity_"))
+@app.on_callback_query(filters.regex("rarity_"))
 async def upload_step4(client, callback_query: CallbackQuery):
     rarity = callback_query.data.split("_")[1].capitalize()
     user_id = callback_query.from_user.id
