@@ -294,44 +294,6 @@ Guess their name with `/guess {char_id} <name>` to make them yours! 🏆""",
         parse_mode="markdown"
     )
 
-@app.on_message(filters.command("guess"))
-async def guess_handler(client, message: Message):
-    args = message.text.split(" ", 2)
-    if len(args) != 3:
-        return await message.reply("**Usage:** `/guess <id> <character_name>`")
-
-    waifu_id = args[1]
-    guess = args[2].strip().lower()
-
-    waifu = guess_data.get(waifu_id)
-
-    if not waifu:
-        return await message.reply("❌ Invalid or expired waifu ID.")
-
-    if waifu["guessed_by"]:
-        return await message.reply("⚠️ This character has already been guessed.")
-
-    if guess != waifu["name"]:
-        return await message.reply("❌ Wrong guess. Try again!")
-
-    waifu["guessed_by"] = message.from_user.id
-    username = message.from_user.first_name
-    coins = waifu["coins"]
-
-    # Send rewards message + character reveal
-    await message.reply(
-        f"🎉 Congrats! You've earned {coins} dazzling coins for guessing correctly! 💰"
-    )
-
-    await message.reply(
-        f"**{username}** 🎊 You guessed the character!\n\n"
-        f"🍁 Name: {waifu['name'].title()}\n"
-        f"⛩ Anime: {waifu['anime']}\n"
-        f"🎐 Rarity: {waifu['rarity']}\n\n"
-        "This character is now in your harem! Use /mycollection to see your harem.",
-        parse_mode="markdown"
-    )
-
 # /mycollection command 
 @app.on_message(filters.command("mycollection"))
 async def mycollection_handler(client, message: Message):
@@ -390,5 +352,70 @@ async def mycollection_handler(client, message: Message):
         f"🟠 Orange: `{rarity_count['orange']}`"
     )
 
-# Run the bot
-app.run()
+import random
+import sqlite3
+
+# /guess command - Handle guesses
+@app.on_message(filters.command("guess"))
+async def guess_handler(client, message: Message):
+    args = message.text.split(maxsplit=2)
+    if len(args) != 3:
+        return await message.reply("**Usage:** `/guess <char_id> <guessed_name>`")
+
+    char_id = args[1]
+    guessed_name = args[2].lower()
+
+    if char_id not in guess_data:
+        return await message.reply("❌ Invalid or expired character ID.")
+
+    character = guess_data[char_id]
+    correct_name = character["name"]
+
+    if guessed_name == correct_name:
+        user_id = message.from_user.id
+        coins = character["coins"]
+        guess_data.pop(char_id)
+
+        # Update user's coins
+        update_user_coins(user_id, coins)
+
+        await message.reply(
+            f"🎉 Correct! You guessed `{correct_name}` from the anime `{character['anime']}`.\n"
+            f"💰 You earned {coins} coins!"
+        )
+    else:
+        await message.reply("❌ Incorrect guess. Try again!")
+
+# Function to update user coins
+def update_user_coins(user_id, coins):
+    conn = sqlite3.connect("waifus.db")
+    cur = conn.cursor()
+    cur.execute("SELECT * FROM users WHERE user_id = ?", (user_id,))
+    result = cur.fetchone()
+
+    if result:
+        cur.execute("UPDATE users SET coins = coins + ? WHERE user_id = ?", (coins, user_id))
+    else:
+        cur.execute("INSERT INTO users (user_id, coins) VALUES (?, ?)", (user_id, coins))
+
+    conn.commit()
+    conn.close()
+
+# Command to check user coins
+@app.on_message(filters.command("mycoins"))
+async def mycoins_command(client, message: Message):
+    user_id = message.from_user.id
+    conn = sqlite3.connect("waifus.db")
+    cur = conn.cursor()
+    cur.execute("SELECT coins FROM users WHERE user_id = ?", (user_id,))
+    result = cur.fetchone()
+
+    if result:
+        coins = result[0]
+        await message.reply(f"💰 You have {coins} coins.")
+    else:
+        await message.reply("❌ You don't have any coins yet.")
+
+# Start the bot
+if __name__ == "__main__":
+    app.run()
