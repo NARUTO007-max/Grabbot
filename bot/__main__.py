@@ -252,9 +252,38 @@ async def accept_trade_callback(client, callback_query):
         f"• {partner_waifu['name']} → [User](tg://user?id={sender_id})"
     )
 
-@app.on_callback_query(filters.regex("reject_trade"))
-async def reject_trade_callback(client, callback_query):
-    await callback_query.message.edit("❌ Trade Rejected.")
+from pyrogram.types import CallbackQuery
+
+# Trade callback handler
+@app.on_callback_query(filters.regex(r"^(accept_trade|reject_trade)"))
+async def handle_trade_callback(client, callback_query: CallbackQuery):
+    data = callback_query.data
+
+    if data == "reject_trade":
+        await callback_query.message.edit("❌ Trade rejected.")
+        return
+
+    _, sender_id, your_waifuid, partner_waifuid = data.split("|")
+    partner_id = callback_query.from_user.id
+
+    # Fetch both waifus again
+    your_waifu = get_waifu_by_user(int(sender_id), your_waifuid)
+    partner_waifu = get_waifu_by_user(partner_id, partner_waifuid)
+
+    # Recheck to make sure both still have their waifus
+    if not your_waifu or your_waifu["quantity"] < 1:
+        return await callback_query.message.edit("❌ Sender no longer owns their waifu.")
+    if not partner_waifu or partner_waifu["quantity"] < 1:
+        return await callback_query.message.edit("❌ You no longer own your waifu.")
+
+    # Perform trade: decrease 1 from each, add 1 to each other's inventory
+    update_waifu_quantity(int(sender_id), your_waifuid, -1)
+    update_waifu_quantity(partner_id, partner_waifuid, -1)
+
+    add_or_update_waifu(partner_id, your_waifu)
+    add_or_update_waifu(int(sender_id), partner_waifu)
+
+    await callback_query.message.edit("✅ Trade successful!")
 
 # /upload and /guess command 
 RARITY_MAP = {"1": "🟢", "2": "🟠", "3": "🟡", "4": "🔴", "5": "💮"}
