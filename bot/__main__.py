@@ -191,6 +191,18 @@ async def handle_trade_callback(client, callback_query: CallbackQuery):
     del pending_trades[trade_id]
     await callback_query.edit_message_text("✅ Trade successful! Waifus exchanged.")
 
+from pyrogram import Client, filters
+from pyrogram.types import Message, CallbackQuery, InlineKeyboardMarkup, InlineKeyboardButton
+import sqlite3
+
+# DB connection setup
+conn = sqlite3.connect("waifu.db", check_same_thread=False)
+conn.row_factory = sqlite3.Row
+cur = conn.cursor()
+
+# User upload state tracking
+user_upload_state = {}
+
 @bot.on_message(filters.command("upload") & filters.private)
 async def upload_step1(client, message: Message):
     user_upload_state[message.from_user.id] = {"step": 1}
@@ -221,8 +233,7 @@ async def upload_step3(client, message: Message):
     elif state["step"] == 4:
         user_upload_state[message.from_user.id]["description"] = message.text
         data = user_upload_state[message.from_user.id]
-        c.execute("INSERT INTO waifus (user_id, name, rarity, description, photo_id) VALUES (?, ?, ?, ?, ?)", (
-            message.from_user.id,
+        cur.execute("INSERT INTO waifus (name, rarity, description, photo_id) VALUES (?, ?, ?, ?)", (
             data["name"],
             data["rarity"],
             data["description"],
