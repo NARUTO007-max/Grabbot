@@ -101,6 +101,91 @@ async def gift_command(client, message: Message):
 
     await message.reply(f"✅ Gifted `{waifu_id}` ({waifu['name']}) to [{receiver.first_name}](tg://user?id={receiver.id})!")
 
+# Store pending trades in memory (you can extend this later to use DB)
+pending_trades = {}
+
+@app.on_message(filters.command("trade"))
+async def trade_command(client, message: Message):
+    parts = message.text.split()
+    if len(parts) < 4:
+        return await message.reply("Usage:\n`/trade <your_waifu_id> <@username> <their_waifu_id>`")
+
+    user1 = message.from_user
+    waifu1_id = parts[1]
+    target_username = parts[2]
+    waifu2_id = parts[3]
+
+    try:
+        user2 = await client.get_users(target_username)
+    except:
+        return await message.reply("User not found!")
+
+    if user1.id == user2.id:
+        return await message.reply("❌ Can't trade with yourself.")
+
+    waifu1 = get_waifu_by_user(user1.id, waifu1_id)
+    waifu2 = get_waifu_by_user(user2.id, waifu2_id)
+
+    if not waifu1:
+        return await message.reply(f"You don't own waifu `{waifu1_id}`.")
+    if not waifu2:
+        return await message.reply(f"{user2.first_name} doesn't own waifu `{waifu2_id}`.")
+
+    trade_id = f"{user1.id}_{user2.id}_{waifu1_id}_{waifu2_id}"
+    pending_trades[trade_id] = {
+        "user1": user1.id,
+        "user2": user2.id,
+        "waifu1": waifu1,
+        "waifu2": waifu2
+    }
+
+    await message.reply(
+        f"📦 Trade Proposal Sent To [{user2.first_name}](tg://user?id={user2.id})\n\n"
+        f"• {user1.first_name} wants to trade:\n"
+        f"`{waifu1_id}` ({waifu1['name']})\n"
+        f"⬌\n"
+        f"`{waifu2_id}` ({waifu2['name']}) from {user2.first_name}",
+        reply_markup=InlineKeyboardMarkup([[
+            InlineKeyboardButton("✅ Accept", callback_data=f"accept_trade|{trade_id}"),
+            InlineKeyboardButton("❌ Reject", callback_data=f"reject_trade|{trade_id}")
+        ]])
+    )
+
+@app.on_callback_query(filters.regex("^(accept_trade|reject_trade)\|"))
+async def handle_trade_callback(client, callback_query: CallbackQuery):
+    data = callback_query.data.split("|")
+    action = data[0]
+    trade_id = data[1]
+
+    trade = pending_trades.get(trade_id)
+    if not trade:
+        return await callback_query.answer("This trade has expired or is invalid.", show_alert=True)
+
+    user2_id = callback_query.from_user.id
+    if user2_id != trade["user2"]:
+        return await callback_query.answer("You're not authorized for this trade.", show_alert=True)
+
+    if action == "reject_trade":
+        del pending_trades[trade_id]
+        return await callback_query.edit_message_text("❌ Trade rejected!")
+
+    # Proceed with swap
+    w1 = trade["waifu1"]
+    w2 = trade["waifu2"]
+    user1 = trade["user1"]
+    user2 = trade["user2"]
+
+    # Deduct one waifu each
+    update_waifu_quantity(user1, w1["char_id"], -1)
+    update_waifu_quantity(user2, w2["char_id"], -1)
+
+    # Add to the other user
+    add_or_update_waifu(user1, w2)
+    add_or_update_waifu(user2, w1)
+
+    del pending_trades[trade_id]
+    await callback_query.edit_message_text("✅ Trade successful! Waifus exchanged.")
+
 # Start the bot
 if __name__ == "__main__":
     app.run()
