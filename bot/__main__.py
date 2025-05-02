@@ -356,5 +356,37 @@ async def mycollection_handler(client, message: Message):
 
     await message.reply(response)
 
+@app.on_message(filters.command("mycollection"))
+async def mycollection_handler(client, message: Message):
+    user_id = message.from_user.id
+    first_name = message.from_user.first_name
+
+    conn = sqlite3.connect("waifus.db")
+    conn.row_factory = sqlite3.Row
+    cur = conn.cursor()
+    cur.execute("SELECT * FROM waifus WHERE user_id = ?", (user_id,))
+    all_waifus = cur.fetchall()
+    conn.close()
+
+    if not all_waifus:
+        return await message.reply(f"**{first_name}**, you haven't collected any waifus yet!")
+
+    total_waifus = sum([w["quantity"] for w in all_waifus])
+    unique_waifus = len(all_waifus)
+
+    # Count by rarity
+    rarity_count = {"orange": 0, "yellow": 0, "red": 0}
+    for w in all_waifus:
+        rarity_count[w["rarity"]] += w["quantity"]
+
+    await message.reply(
+        f"**{first_name}'s Collection Summary:**\n\n"
+        f"➤ Total Waifus: `{total_waifus}`\n"
+        f"➤ Unique Waifus: `{unique_waifus}`\n\n"
+        f"🔴 Red: `{rarity_count['red']}`\n"
+        f"🟡 Yellow: `{rarity_count['yellow']}`\n"
+        f"🟠 Orange: `{rarity_count['orange']}`"
+    )
+
 # Run the bot
 app.run()
