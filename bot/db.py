@@ -15,7 +15,7 @@ conn.commit()
 conn.close()
 
 # Add user to database
-def add_user(user.id, user.username):
+def add_user(user_id, username):
     conn = sqlite3.connect('waifu_bot.db')
     cursor = conn.cursor()
     cursor.execute('''
