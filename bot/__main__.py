@@ -107,8 +107,29 @@ async def gift_command(client, message: Message):
 
     await message.reply(f"✅ Gifted `{waifu_id}` ({waifu['name']}) to [{receiver.first_name}](tg://user?id={receiver.id})!")
 
-# Store pending trades in memory (you can extend this later to use DB)
-pending_trades = {}
+from pyrogram import Client, filters
+from pyrogram.types import Message, CallbackQuery, InlineKeyboardMarkup, InlineKeyboardButton
+from typing import Dict
+
+# Dictionary to store pending trades
+pending_trades: Dict[str, Dict] = {}
+
+# Assuming we have a database or in-memory structure to store waifus
+# Function to get waifu by user ID and waifu ID
+def get_waifu_by_user(user_id, waifu_id):
+    # This should fetch waifu data from the database based on the user and waifu IDs
+    # Return None if not found
+    pass
+
+# Function to update waifu quantity after trade
+def update_waifu_quantity(user_id, waifu_id, quantity_change):
+    # This should update the waifu quantity in the database
+    pass
+
+# Function to add or update waifu for the user
+def add_or_update_waifu(user_id, waifu_data):
+    # Add or update waifu data in the database
+    pass
 
 @app.on_message(filters.command("trade"))
 async def trade_command(client, message: Message):
@@ -129,6 +150,7 @@ async def trade_command(client, message: Message):
     if user1.id == user2.id:
         return await message.reply("❌ Can't trade with yourself.")
 
+    # Get waifu details for both users
     waifu1 = get_waifu_by_user(user1.id, waifu1_id)
     waifu2 = get_waifu_by_user(user2.id, waifu2_id)
 
@@ -175,7 +197,7 @@ async def handle_trade_callback(client, callback_query: CallbackQuery):
         del pending_trades[trade_id]
         return await callback_query.edit_message_text("❌ Trade rejected!")
 
-    # Proceed with swap
+    # Proceed with the trade (swap waifus)
     w1 = trade["waifu1"]
     w2 = trade["waifu2"]
     user1 = trade["user1"]
@@ -185,15 +207,12 @@ async def handle_trade_callback(client, callback_query: CallbackQuery):
     update_waifu_quantity(user1, w1["char_id"], -1)
     update_waifu_quantity(user2, w2["char_id"], -1)
 
-    # Add to the other user
+    # Add the other waifu to each user
     add_or_update_waifu(user1, w2)
     add_or_update_waifu(user2, w1)
 
     del pending_trades[trade_id]
     await callback_query.edit_message_text("✅ Trade successful! Waifus exchanged.")
-
-from pyrogram import filters
-from pyrogram.types import Message
 
 @app.on_message(filters.command("upload") & filters.user([7019600964]))
 async def upload_waifu(app, message: Message):
