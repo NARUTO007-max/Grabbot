@@ -1,5 +1,74 @@
 import sqlite3
 
+# Create users table
+def create_users_table():
+    conn = sqlite3.connect('waifu_bot.db')
+    cursor = conn.cursor()
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS users (
+            user_id INTEGER PRIMARY KEY,
+            username TEXT
+        )
+    ''')
+    conn.commit()
+    conn.close()
+
+# Add user to database
+def add_user(user_id, username):
+    conn = sqlite3.connect('waifu_bot.db')
+    cursor = conn.cursor()
+    cursor.execute('''
+        INSERT OR IGNORE INTO users (user_id, username)
+        VALUES (?, ?)
+    ''', (user_id, username))
+    conn.commit()
+    conn.close()
+
+# Get user's waifus (example placeholder, update if you link waifus to users)
+def get_user_waifus(user_id):
+    conn = sqlite3.connect('waifu_bot.db')
+    cursor = conn.cursor()
+    cursor.execute('''
+        SELECT * FROM waifus WHERE id IN (
+            SELECT waifu_id FROM user_waifus WHERE user_id = ?
+        )
+    ''', (user_id,))
+    waifus = cursor.fetchall()
+    conn.close()
+    return waifus
+
+# Optional: if not already present, create user_waifus table
+def create_user_waifus_table():
+    conn = sqlite3.connect('waifu_bot.db')
+    cursor = conn.cursor()
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS user_waifus (
+            user_id INTEGER,
+            waifu_id INTEGER,
+            quantity INTEGER DEFAULT 1,
+            PRIMARY KEY (user_id, waifu_id)
+        )
+    ''')
+    conn.commit()
+    conn.close()
+
+# Update waifu quantity for a user (e.g., gifting or trading)
+def update_waifu_quantity(user_id, waifu_id, quantity):
+    conn = sqlite3.connect('waifu_bot.db')
+    cursor = conn.cursor()
+    cursor.execute('''
+        INSERT INTO user_waifus (user_id, waifu_id, quantity)
+        VALUES (?, ?, ?)
+        ON CONFLICT(user_id, waifu_id)
+        DO UPDATE SET quantity = quantity + ?
+    ''', (user_id, waifu_id, quantity, quantity))
+    conn.commit()
+    conn.close()
+
+# Add or update waifu in user inventory
+def add_or_update_waifu(user_id, waifu_id):
+    update_waifu_quantity(user_id, waifu_id, 1)
+
 # Initialize database and tables
 def init_db():
     # Connect to SQLite database (or create it if it doesn't exist)
