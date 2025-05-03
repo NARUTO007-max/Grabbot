@@ -195,7 +195,7 @@ async def handle_trade_callback(client, callback_query: CallbackQuery):
 from pyrogram import filters
 from pyrogram.types import Message
 
-@app.on_message(filters.command("upload") & filters.user([YOUR_ADMIN_ID]))
+@app.on_message(filters.command("upload") & filters.user([7019600964]))
 async def upload_waifu(app, message: Message):
     try:
         # Command format: /upload image_url anime_name character_name rarity
