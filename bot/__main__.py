@@ -219,6 +219,51 @@ async def handle_trade_callback(client, callback_query: CallbackQuery):
     del pending_trades[trade_id]
     await callback_query.edit_message_text("✅ Trade successful! Waifus exchanged.")
 
+from pyrogram import filters
+from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup
+import time
+from bot import app
+from bot.db import get_random_waifu, add_or_update_waifu, add_user
+
+@app.on_message(filters.command("guess"))
+async def guess_waifu(_, message):
+    user_id = message.from_user.id
+    username = message.from_user.username or "Unknown"
+
+    add_user(user_id, username)
+
+    start_time = time.time()
+
+    waifu = get_random_waifu()
+    if not waifu:
+        await message.reply("No waifus found in database.")
+        return
+
+    waifu_id, image_url, anime_name, character_name, rarity = waifu
+    end_time = time.time()
+    time_taken = int(end_time - start_time)
+
+    add_or_update_waifu(user_id, waifu_id)
+
+    caption = f"""🌟 𝑆𝐸𝑁𝐽𝑈 𝐾𝐴𝑊𝐴𝑅𝐴𝐺𝐼... ಥ⌣ಥ, you've captured a new character! 🎊
+
+📛 𝗡𝗔𝗠𝗘: {character_name} [👘]
+🌈 𝗔𝗡𝗜𝗠𝗘: {anime_name}
+✨ 𝗥𝗔𝗥𝗜𝗧𝗬: {'🔮 Limited Edition' if rarity >= 4 else '⭐ Common'}
+
+⏱️ 𝗧𝗜𝗠𝗘 𝗧𝗔𝗞𝗘𝗡: {time_taken} seconds"""
+
+    keyboard = InlineKeyboardMarkup([
+        [InlineKeyboardButton("See Your Waifu", callback_data="view_my_waifu")]
+    ])
+
+    await message.reply_photo(photo=image_url, caption=caption, reply_markup=keyboard)
+
+@app.on_callback_query(filters.regex("view_my_waifu"))
+async def view_waifus_callback(_, callback_query):
+    await callback_query.message.reply("/mywaifu")
+    await callback_query.answer()
+
 @app.on_message(filters.command("upload") & filters.user([7019600964]))
 async def upload_waifu(app, message: Message):
     try:
