@@ -155,3 +155,18 @@ def get_all_group_ids():
 
     conn.close()
     return [group[0] for group in groups]
+
+# Fetch waifus for a specific user
+def get_waifu_by_user(user_id):
+    conn = sqlite3.connect('waifu_bot.db')
+    cursor = conn.cursor()
+
+    cursor.execute('''
+        SELECT w.* FROM waifus w
+        INNER JOIN user_waifus uw ON w.id = uw.waifu_id
+        WHERE uw.user_id = ?
+    ''', (user_id,))
+    waifus = cursor.fetchall()
+
+    conn.close()
+    return waifus
