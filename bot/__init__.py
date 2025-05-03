@@ -7,6 +7,4 @@ app = Flask(__name__)
 from bot import routes
 
 # Optional: Additional configuration or app setup can be done here
-app.config['SECRET_KEY'] = 'your_secret_key_here'
-
-# Bot ke liye koi extra settings agar ho toh woh bhi yahan define kar sakte hain.
+# (SECRET_KEY ki zarurat nahi hai agar sessions/forms use nahi kar rahe)
