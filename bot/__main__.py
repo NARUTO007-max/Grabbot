@@ -64,15 +64,16 @@ async def mywaifu_command(client, message: Message):
     for w in waifus:
         series_dict.setdefault(w["series"], []).append(w)
 
-    text = f"*{first_name}'s Harem*\n"
+    text = f"**{first_name}'s Harem**\n"
+    text += "───────────────────────\n"
+
     for series, chars in series_dict.items():
-        text += f"\n⥱ {series} ({len(chars)} waifus)\n"
-        text += "⚋" * 15 + "\n"
+        text += f"\n📺 *{series}* — `{len(chars)} waifus`\n"
+        text += "━━━━━━━━━━━━━━━━━━\n"
         for c in chars:
             emoji = RARITY_EMOJIS.get(c["rarity"], "")
-            group_tag = " [👥]" if c["is_group"] else ""
-            text += f"➥ {c['char_id']} | {emoji} | {c['name']}{group_tag} x{c['quantity']}\n"
-        text += "⚋" * 15 + "\n"
+            group_tag = "👥" if c.get("is_group") else ""
+            text += f"• `{c['char_id']}` | {emoji} | *{c['name']}* {group_tag} x{c['quantity']}\n"
 
     await message.reply(text)
 
