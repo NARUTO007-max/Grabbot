@@ -201,19 +201,32 @@ async def upload_waifu(app, message: Message):
         # Command format: /upload image_url anime_name character_name rarity
         if len(message.command) < 5:
             return await message.reply(
-                "❌ Format galat hai!\nUse: `/upload image_url anime_name character_name rarity`",
+                "❌ Format galat hai!\nUse: `/upload image_url anime_name character_name rarity (1-5)`",
                 quote=True
             )
 
         image_url = message.command[1]
         anime_name = message.command[2]
         character_name = message.command[3]
-        rarity = message.command[4]
+        rarity_input = message.command[4]
+
+        if not rarity_input.isdigit() or not (1 <= int(rarity_input) <= 5):
+            return await message.reply("❌ Rarity 1 se 5 ke beech number hona chahiye.", quote=True)
+
+        rarity_num = int(rarity_input)
+        rarity_emojis = {
+            1: "⚪",
+            2: "🟢",
+            3: "🟣",
+            4: "🔴",
+            5: "💮"
+        }
+        rarity_display = rarity_emojis[rarity_num]
 
         caption = (
             f"🌟 Pʀᴇᴘᴀʀᴇ Fᴏʀ A Tʜʀɪʟʟ! A ʙʀᴀɴᴅ-Nᴇᴡ 🔮 Limited Edition Cʜᴀʀᴀᴄᴛᴇʀ Hᴀs Eᴍᴇʀɢᴇᴅ!\n"
             f"Qᴜɪᴄᴋ, Hᴇᴀᴅ Tᴏ /guess Tᴏ Rᴇᴠᴇᴀʟ Tʜᴇ Cʜᴀʀᴀᴄᴛᴇʀ's Nᴀᴍᴇ Aɴᴅ Aᴅᴅ Iɴ Yᴏᴜʀ Hᴀʀᴇᴍ!\n\n"
-            f"Anime: `{anime_name}`\nRarity: `{rarity}`"
+            f"Anime: `{anime_name}`\nRarity: `{rarity_display}`"
         )
 
         await app.send_photo(
