@@ -222,7 +222,6 @@ async def handle_trade_callback(client, callback_query: CallbackQuery):
 from pyrogram import filters
 from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 import time
-from bot import app
 from bot.db import get_random_waifu, add_or_update_waifu, add_user
 
 @app.on_message(filters.command("guess"))
