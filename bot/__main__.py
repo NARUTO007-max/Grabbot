@@ -31,20 +31,16 @@ async def start_command(client, message: Message):
     user = message.from_user
     add_user(user.id, user.username, user.first_name)
 
-    sticker = await message.reply_sticker("CAACAgUAAxkBAfcaNmgTo-RkdWFjNVSvGLHpOdwBzsLQAALYDwAC82qpVcmJwWw59RlONgQ")
-    await asyncio.sleep(2)
-    await sticker.delete()
-
     await message.reply_photo(
         photo="https://files.catbox.moe/461mqe.jpg",
         caption="""
 *ʜᴇʟʟᴏ...*
 
-*ɪ'ᴍ ʜɪɴᴀᴛᴀ ʏᴏᴜʀ ᴡᴀɪғᴜ ᴄʜᴀʀᴀᴄᴛᴇʀ ɢᴜᴇss ʙᴏᴛ.....*
+*ɪ'ᴍ ʜɪɴᴀᴛᴀ — ʏᴏᴜʀ ᴡᴀɪғᴜ ᴄʜᴀʀᴀᴄᴛᴇʀ ɢᴜᴇss ʙᴏᴛ.*
 
-ᴀᴅᴅ ᴍᴇ ɪɴ ʏᴏᴜʀ ɢʀᴏᴜᴘ ᴀɴᴅ ɪ ᴡɪʟʟ sᴇɴᴅ ʀᴀɴᴅᴏᴍ ᴄʜᴀʀᴀᴄᴛᴇʀs ɪɴ ʏᴏᴜʀ ɢʀᴏᴜᴘ...
+➤ ᴀᴅᴅ ᴍᴇ ɪɴ ʏᴏᴜʀ ɢʀᴏᴜᴘ ᴀɴᴅ ɪ ᴡɪʟʟ sᴇɴᴅ ʀᴀɴᴅᴏᴍ ᴀɴɪᴍᴇ ᴄʜᴀʀᴀᴄᴛᴇʀs ᴛᴏ ɢᴜᴇss...
 
-ᴍᴜsᴛ Jᴏɪɴ :- @animaction_world_in_2025
+📢 *ᴍᴜsᴛ ᴊᴏɪɴ:* @animaction_world_in_2025
         """,
         reply_markup=InlineKeyboardMarkup([
             [InlineKeyboardButton("〔 ＋ ᴀᴅᴅ ᴍᴇ ᴛᴏ ɢʀᴏᴜᴘ 〕", url="https://t.me/HinataXSupportbot?startgroup=true")],
