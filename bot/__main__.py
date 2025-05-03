@@ -192,66 +192,40 @@ async def handle_trade_callback(client, callback_query: CallbackQuery):
     del pending_trades[trade_id]
     await callback_query.edit_message_text("✅ Trade successful! Waifus exchanged.")
 
-from pyrogram import Client, filters
-from pyrogram.types import Message, CallbackQuery, InlineKeyboardMarkup, InlineKeyboardButton
-import sqlite3
+from pyrogram import filters
+from pyrogram.types import Message
 
-# DB connection setup
-conn = sqlite3.connect("waifu.db", check_same_thread=False)
-conn.row_factory = sqlite3.Row
-cur = conn.cursor()
+@app.on_message(filters.command("upload") & filters.user([YOUR_ADMIN_ID]))
+async def upload_waifu(app, message: Message):
+    try:
+        # Command format: /upload image_url anime_name character_name rarity
+        if len(message.command) < 5:
+            return await message.reply(
+                "❌ Format galat hai!\nUse: `/upload image_url anime_name character_name rarity`",
+                quote=True
+            )
 
-# User upload state tracking
-user_upload_state = {}
+        image_url = message.command[1]
+        anime_name = message.command[2]
+        character_name = message.command[3]
+        rarity = message.command[4]
 
-@app.on_message(filters.command("upload") & filters.private)
-async def upload_step1(client, message: Message):
-    user_upload_state[message.from_user.id] = {"step": 1}
-    await message.reply("Send waifu photo.")
+        caption = (
+            f"🌟 Pʀᴇᴘᴀʀᴇ Fᴏʀ A Tʜʀɪʟʟ! A ʙʀᴀɴᴅ-Nᴇᴡ 🔮 Limited Edition Cʜᴀʀᴀᴄᴛᴇʀ Hᴀs Eᴍᴇʀɢᴇᴅ!\n"
+            f"Qᴜɪᴄᴋ, Hᴇᴀᴅ Tᴏ /guess {character_name} Tᴏ Rᴇᴠᴇᴀʟ Tʜᴇ Cʜᴀʀᴀᴄᴛᴇʀ's Nᴀᴍᴇ Aɴᴅ Aᴅᴅ Iɴ Yᴏᴜʀ Hᴀʀᴇᴍ!\n\n"
+            f"Anime: `{anime_name}`\nRarity: `{rarity}`"
+        )
 
-@app.on_message(filters.photo & filters.private)
-async def upload_step2(client, message: Message):
-    state = user_upload_state.get(message.from_user.id)
-    if state and state["step"] == 1:
-        user_upload_state[message.from_user.id]["photo_id"] = message.photo.file_id
-        user_upload_state[message.from_user.id]["step"] = 2
-        await message.reply("Send waifu name.")
+        await app.send_photo(
+            chat_id=message.chat.id,
+            photo=image_url,
+            caption=caption
+        )
 
-@app.on_message(filters.text & filters.private)
-async def upload_step3(client, message: Message):
-    state = user_upload_state.get(message.from_user.id)
-    if not state: return
+        await message.reply("✅ Waifu uploaded successfully!", quote=True)
 
-    if state["step"] == 2:
-        user_upload_state[message.from_user.id]["name"] = message.text
-        user_upload_state[message.from_user.id]["step"] = 3
-        await message.reply("Choose rarity:", reply_markup=InlineKeyboardMarkup([
-            [InlineKeyboardButton("Common", callback_data="rarity_common")],
-            [InlineKeyboardButton("Rare", callback_data="rarity_rare")],
-            [InlineKeyboardButton("Epic", callback_data="rarity_epic")],
-            [InlineKeyboardButton("Legendary", callback_data="rarity_legendary")],
-        ]))
-    elif state["step"] == 4:
-        user_upload_state[message.from_user.id]["description"] = message.text
-        data = user_upload_state[message.from_user.id]
-        cur.execute("INSERT INTO waifus (name, rarity, description, photo_id) VALUES (?, ?, ?, ?)", (
-            data["name"],
-            data["rarity"],
-            data["description"],
-            data["photo_id"]
-        ))
-        conn.commit()
-        del user_upload_state[message.from_user.id]
-        await message.reply("Waifu uploaded successfully!")
-
-@app.on_callback_query(filters.regex("rarity_"))
-async def upload_step4(client, callback_query: CallbackQuery):
-    rarity = callback_query.data.split("_")[1].capitalize()
-    user_id = callback_query.from_user.id
-    if user_id in user_upload_state:
-        user_upload_state[user_id]["rarity"] = rarity
-        user_upload_state[user_id]["step"] = 4
-        await callback_query.message.edit_text(f"Selected: {rarity}. Now send waifu description.")
+    except Exception as e:
+        await message.reply(f"❌ Error: `{e}`", quote=True)
 
 # Start the bot
 if __name__ == "__main__":
