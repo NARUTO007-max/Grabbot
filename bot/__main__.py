@@ -81,28 +81,36 @@ async def mywaifu_command(client, message: Message):
 async def gift_command(client, message: Message):
     parts = message.text.split(maxsplit=2)
     if len(parts) < 3:
-        return await message.reply("Usage: `/gift <waifu_id> <@user>`")
+        return await message.reply("**Usage:** `/gift <waifu_id> <@username>`")
 
-    sender_id = message.from_user.id
+    sender = message.from_user
     waifu_id = parts[1]
     receiver_username = parts[2]
 
     try:
         receiver = await client.get_users(receiver_username)
-    except:
-        return await message.reply("User not found.")
+    except Exception:
+        return await message.reply("❌ Couldn't find that user.")
 
-    if receiver.id == sender_id:
-        return await message.reply("❌ Can't gift yourself!")
+    if receiver.id == sender.id:
+        return await message.reply("❌ You can't gift waifus to yourself!")
 
-    waifu = get_waifu_by_user(sender_id, waifu_id)
-    if not waifu or waifu["quantity"] < 1:
-        return await message.reply("❌ You don't own this waifu.")
+    waifu = get_waifu_by_user(sender.id, waifu_id)
+    if not waifu:
+        return await message.reply(f"❌ You don't own waifu `{waifu_id}`.")
+    if waifu["quantity"] < 1:
+        return await message.reply("❌ You don't have enough quantity to gift.")
 
-    update_waifu_quantity(sender_id, waifu_id, -1)
+    # Deduct from sender
+    update_waifu_quantity(sender.id, waifu_id, -1)
+
+    # Add to receiver
     add_or_update_waifu(receiver.id, waifu)
 
-    await message.reply(f"✅ Gifted `{waifu_id}` ({waifu['name']}) to [{receiver.first_name}](tg://user?id={receiver.id})!")
+    await message.reply(
+        f"🎁 *{sender.first_name}* gifted `{waifu_id}` — *{waifu['name']}* "
+        f"to [{receiver.first_name}](tg://user?id={receiver.id})!"
+    )
 
 from pyrogram import Client, filters
 from pyrogram.types import Message, CallbackQuery, InlineKeyboardMarkup, InlineKeyboardButton
