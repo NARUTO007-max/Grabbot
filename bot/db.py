@@ -1,20 +1,21 @@
 import sqlite3
 
-# Create users table
-def create_users_table():
-    conn = sqlite3.connect('waifu_bot.db')
-    cursor = conn.cursor()
-    cursor.execute('''
-        CREATE TABLE IF NOT EXISTS users (
-            user_id INTEGER PRIMARY KEY,
-            username TEXT
-        )
-    ''')
-    conn.commit()
-    conn.close()
+conn = sqlite3.connect("your_database.db")
+cursor = conn.cursor()
+
+cursor.execute("""
+CREATE TABLE IF NOT EXISTS waifus (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    waifu_name TEXT NOT NULL
+)
+""")
+
+conn.commit()
+conn.close()
 
 # Add user to database
-def add_user(user_id, username):
+def add_user(user.id, user.username):
     conn = sqlite3.connect('waifu_bot.db')
     cursor = conn.cursor()
     cursor.execute('''
