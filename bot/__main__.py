@@ -4,7 +4,7 @@ from bot.db import add_user, is_user_connected, set_connected, add_channel, get_
 
 bot = Client("PostBot", 
 api_id=25698862, 
-api_hash="7d7739b44f5f8c825d48cc6787889dbc", bot_token="7728636876:AAHbkV_DljkD-X_pO1u6VpcoWwleVemxozA")
+api_hash="7d7739b44f5f8c825d48cc6787889dbc", bot_token="8118619512:AAGPRtzdpmSLKDx2UOgOC7KtJ6vrgtA63xc")
 
 @bot.on_message(filters.command("start"))
 async def start(client, message: Message):
