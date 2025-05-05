@@ -12,7 +12,6 @@ bot = Client(
     bot_token=bot_token
 )
 
-# Start command
 @bot.on_message(filters.command("start") & filters.private)
 async def start_game(client, message):
     keyboard = InlineKeyboardMarkup(
@@ -24,7 +23,6 @@ async def start_game(client, message):
         reply_markup=keyboard
     )
 
-# Step 1: Start Game pressed
 @bot.on_callback_query(filters.regex("start_game"))
 async def continue_game(client, callback_query):
     await callback_query.message.edit_caption(
@@ -35,58 +33,81 @@ async def continue_game(client, callback_query):
     )
     await callback_query.answer()
 
-# Step 2: Continue Journey
 @bot.on_callback_query(filters.regex("continue_journey"))
 async def choose_verse(client, callback_query):
     keyboard = InlineKeyboardMarkup(
         [
-            [InlineKeyboardButton("Naruto", callback_data="verse_naruto")],
-            [InlineKeyboardButton("One Piece", callback_data="verse_onepiece")],
-            [InlineKeyboardButton("Bleach", callback_data="verse_bleach")]
+            [InlineKeyboardButton("Naruto", callback_query="verse_naruto")],
+            [InlineKeyboardButton("One Piece", callback_query="verse_onepiece")],
+            [InlineKeyboardButton("Bleach", callback_query="verse_bleach")]
         ]
     )
-    await callback_query.message.edit_caption(
-        "**Choose your Anime Verse for training:**",
+    await callback_query.message.delete()
+    await callback_query.message.reply_photo(
+        photo="https://your-image-url.com/choose_verse.jpg",  # tu yahan apni anime verse image daal
+        caption="**Choose your Anime Verse for training:**",
         reply_markup=keyboard
     )
     await callback_query.answer()
 
-# Step 3: Choose Verse → Show characters
 @bot.on_callback_query(filters.regex("verse_(naruto|onepiece|bleach)"))
 async def choose_character(client, callback_query):
     verse = callback_query.data.split("_")[1]
-    if verse == "naruto":
-        chars = [
-            InlineKeyboardButton("Naruto Uzumaki", callback_data="char_naruto"),
-            InlineKeyboardButton("Sasuke Uchiha", callback_data="char_sasuke"),
-            InlineKeyboardButton("Kakashi Hatake", callback_data="char_kakashi")
+
+    # Character data
+    characters = {
+        "naruto": [
+            ("Naruto Uzumaki", "char_naruto"),
+            ("Sasuke Uchiha", "char_sasuke"),
+            ("Kakashi Hatake", "char_kakashi")
+        ],
+        "onepiece": [
+            ("Luffy", "char_luffy"),
+            ("Zoro", "char_zoro"),
+            ("Sanji", "char_sanji")
+        ],
+        "bleach": [
+            ("Ichigo", "char_ichigo"),
+            ("Rukia", "char_rukia"),
+            ("Byakuya", "char_byakuya")
         ]
-    elif verse == "onepiece":
-        chars = [
-            InlineKeyboardButton("Luffy", callback_data="char_luffy"),
-            InlineKeyboardButton("Zoro", callback_data="char_zoro"),
-            InlineKeyboardButton("Sanji", callback_data="char_sanji")
-        ]
-    elif verse == "bleach":
-        chars = [
-            InlineKeyboardButton("Ichigo", callback_data="char_ichigo"),
-            InlineKeyboardButton("Rukia", callback_data="char_rukia"),
-            InlineKeyboardButton("Byakuya", callback_data="char_byakuya")
-        ]
-    keyboard = InlineKeyboardMarkup([[btn] for btn in chars])
-    await callback_query.message.edit_caption(
-        f"**{verse.capitalize()} verse selected!**\nNow choose your warrior:",
+    }
+
+    keyboard = InlineKeyboardMarkup(
+        [[InlineKeyboardButton(name, callback_data=data)] for name, data in characters[verse]]
+    )
+
+    await callback_query.message.delete()
+    await callback_query.message.reply_photo(
+        photo=f"https://your-image-url.com/{verse}_chars.jpg",  # yahan per tu har verse ke characters ki photo laga
+        caption=f"**{verse.capitalize()} Verse Selected!**\nNow choose your warrior:",
         reply_markup=keyboard
     )
     await callback_query.answer()
 
-# Step 4: Character Chosen → Show Stats
 @bot.on_callback_query(filters.regex("char_"))
 async def final_character(client, callback_query):
-    char = callback_query.data.split("_")[1].capitalize()
-    stats = f"**{char} Selected!**\n\n**Level**: 1\n**Power**: 120\n**Defense**: 90\n**Speed**: 100\n\nLet the battles begin!"
-    await callback_query.message.edit_caption(
-        stats
+    char = callback_query.data.split("_")[1]
+
+    # Dummy image URLs for characters
+    char_images = {
+        "naruto": "https://your-image-url.com/naruto.jpg",
+        "sasuke": "https://your-image-url.com/sasuke.jpg",
+        "kakashi": "https://your-image-url.com/kakashi.jpg",
+        "luffy": "https://your-image-url.com/luffy.jpg",
+        "zoro": "https://your-image-url.com/zoro.jpg",
+        "sanji": "https://your-image-url.com/sanji.jpg",
+        "ichigo": "https://your-image-url.com/ichigo.jpg",
+        "rukia": "https://your-image-url.com/rukia.jpg",
+        "byakuya": "https://your-image-url.com/byakuya.jpg",
+    }
+
+    stats = f"**{char.capitalize()} Selected!**\n\n**Level**: 1\n**Power**: 120\n**Defense**: 90\n**Speed**: 100\n\nLet the battles begin!"
+
+    await callback_query.message.delete()
+    await callback_query.message.reply_photo(
+        photo=char_images.get(char, "https://your-image-url.com/default.jpg"),
+        caption=stats
     )
     await callback_query.answer("Warrior Selected!")
 
