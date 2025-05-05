@@ -62,7 +62,7 @@ async def choose_verse(client, callback_query):
     )
     await callback_query.message.delete()
     await callback_query.message.reply_photo(
-        photo="https://your-image-url.com/choose_verse.jpg",  # tu yahan apni anime verse image daal
+        photo="https://files.catbox.moe/b0co3e.jpg",  # tu yahan apni anime verse image daal
         caption="**Choose your Anime Verse for training:**",
         reply_markup=keyboard
     )
@@ -97,7 +97,7 @@ async def choose_character(client, callback_query):
 
     await callback_query.message.delete()
     await callback_query.message.reply_photo(
-        photo=f"https://your-image-url.com/{verse}_chars.jpg",  # yahan per tu har verse ke characters ki photo laga
+        photo=f"https://files.catbox.moe/b0co3e.jpg",  # yahan per tu har verse ke characters ki photo laga
         caption=f"**{verse.capitalize()} Verse Selected!**\nNow choose your warrior:",
         reply_markup=keyboard
     )
