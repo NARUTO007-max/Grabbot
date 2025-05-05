@@ -53,6 +53,63 @@ async def connect_channel(client, message: Message):
     )
     set_connected(message.from_user.id, 1)
 
+@bot.on_callback_query(filters.regex("edit_post"))
+async def edit_post_cb(client, callback_query):
+    user_id = callback_query.from_user.id
+    channels = get_user_channels(user_id)
+
+    if not channels:
+        await callback_query.message.edit_text(
+            "**You haven't connected any channels yet!**\nUse /start and connect one.",
+            reply_markup=InlineKeyboardMarkup([
+                [InlineKeyboardButton("⬅️ Back", callback_data="back_to_home")]
+            ])
+        )
+        return
+
+    keyboard = []
+    for ch in channels:
+        keyboard.append([InlineKeyboardButton(ch, callback_data=f"edit_channel:{ch}")])
+
+    keyboard.append([InlineKeyboardButton("⬅️ Back", callback_data="back_to_home")])
+
+    await callback_query.message.edit_text(
+        "**Select a channel to edit its posts:**",
+        reply_markup=InlineKeyboardMarkup(keyboard)
+    )
+
+@bot.on_callback_query(filters.regex(r"edit_channel:(.+)"))
+async def edit_channel_selected(client, callback_query):
+    channel_username = callback_query.data.split(":")[1]
+
+    await callback_query.message.edit_text(
+        f"**Editing Channel:** `{channel_username}`\n\n(Feature under development)",
+        reply_markup=InlineKeyboardMarkup([
+            [InlineKeyboardButton("⬅️ Back", callback_data="edit_post")]
+        ])
+    )
+
+@bot.on_callback_query(filters.regex("back_to_home"))
+async def back_to_home_cb(client, callback_query):
+    user_id = callback_query.from_user.id
+
+    if is_user_connected(user_id):
+        await callback_query.message.edit_text(
+            "**Here you can create rich posts, view stats and accomplish other tasks.**",
+            reply_markup=InlineKeyboardMarkup([
+                [InlineKeyboardButton("📝 Create Post", callback_data="create_post")],
+                [InlineKeyboardButton("📊 Channel Stats", callback_data="channel_stats")],
+                [InlineKeyboardButton("✏️ Edit Post", callback_data="edit_post")]
+            ])
+        )
+    else:
+        await callback_query.message.edit_text(
+            "**Please connect a channel to continue.**\n\nUse /start and click '🔗 Connect Channel'",
+            reply_markup=InlineKeyboardMarkup([
+                [InlineKeyboardButton("🔁 Try Again", callback_data="back_to_home")]
+            ])
+        )
+
 @bot.on_callback_query(filters.regex("channel_stats"))
 async def channel_stats_cb(client, callback_query):
     user_id = callback_query.from_user.id
