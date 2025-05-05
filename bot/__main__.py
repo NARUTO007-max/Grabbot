@@ -1,25 +1,43 @@
+import sqlite3
 from pyrogram import Client, filters
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 
+# Config
 api_id = 25698862
 api_hash = "7d7739b44f5f8c825d48cc6787889dbc"
 bot_token = "8068521367:AAFHqYZnf7DnsSWFpN8bk_ffJ5Qe3giRbNw"
 
-bot = Client(
-    "battle_game_bot",
-    api_id=api_id,
-    api_hash=api_hash,
-    bot_token=bot_token
-)
+bot = Client("battle_game_bot", api_id=api_id, api_hash=api_hash, bot_token=bot_token)
+
+# Initialize DB
+conn = sqlite3.connect("users.db")
+cursor = conn.cursor()
+cursor.execute("CREATE TABLE IF NOT EXISTS users (user_id INTEGER PRIMARY KEY, name TEXT)")
+conn.commit()
 
 @bot.on_message(filters.command("start") & filters.private)
 async def start_game(client, message):
+    user_id = message.from_user.id
+    name = message.from_user.first_name
+
+    cursor.execute("SELECT * FROM users WHERE user_id = ?", (user_id,))
+    user = cursor.fetchone()
+
+    if user:
+        await message.reply_text("**You already started the bot!**")
+        return
+
+    # New user: add to DB
+    cursor.execute("INSERT INTO users (user_id, name) VALUES (?, ?)", (user_id, name))
+    conn.commit()
+
     keyboard = InlineKeyboardMarkup(
         [[InlineKeyboardButton("▶️ Start Game", callback_data="start_game")]]
     )
+
     await message.reply_photo(
         photo="https://files.catbox.moe/461mqe.jpg",
-        caption=f"**Welcome {message.from_user.first_name} to Battle Arena!**\nChoose your destiny and fight legendary enemies!",
+        caption=f"**Welcome {name} to Battle Arena!**\nChoose your destiny and fight legendary enemies!",
         reply_markup=keyboard
     )
 
