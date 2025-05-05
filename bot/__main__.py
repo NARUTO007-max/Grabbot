@@ -44,7 +44,8 @@ async def receive_caption(client, message: Message):
     # Get media (photo/video)
     if user_id in user_creating_post and 'caption' in user_creating_post[user_id] and 'media' not in user_creating_post[user_id]:
         if message.photo or message.video:
-            user_creating_post[user_id]['media'] = message.photo or message.video
+    user_creating_post[user_id]['media'] = message.photo or message.video
+    user_creating_post[user_id]['media_type'] = 'photo' if message.photo else 'video'
 
             await message.reply(
                 "**Your post is ready! Do you want to send it now to a connected channel?**",
