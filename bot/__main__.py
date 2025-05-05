@@ -177,16 +177,16 @@ async def final_character(client, callback_query):
     char_data = characters.get(char)
 
     if char_data:
-        char_name = char_data["name"]
-        power = char_data["power"]
-        defense = char_data["defense"]
-        focus = char_data["focus"]
-        agility = char_data["agility"]
-        battle_iq = char_data["battle_iq"]
-        ki_manifestation = char_data["ki_manifestation"]
-        moves = char_data["moves"]
+    char_name = char_data["name"]
+    power = char_data["power"]
+    defense = char_data["defense"]
+    focus = char_data["focus"]
+    agility = char_data["agility"]
+    battle_iq = char_data["battle_iq"]
+    ki_manifestation = char_data["ki_manifestation"]
+    moves = char_data["moves"]
 
-        stats = f"""**Congratulations! 🎉 You have unlocked {char_name}! 🌟**
+    stats = f"""**Congratulations! 🎉 You have unlocked {char_name}! 🌟**
 
 **Stats:**
 ⚔️ Power: {power}
@@ -200,16 +200,16 @@ async def final_character(client, callback_query):
 {moves}
 """
 
-        if char in char_images:
-    # Send stats message with character's image
-    await callback_query.message.delete()
-    await callback_query.message.reply_photo(
-        photo=char_images[char],
-        caption=stats
-    )
-    await callback_query.answer("Warrior Selected!")
-else:
-    await callback_query.answer("Invalid character selected!")
+    if char in char_images:
+        # Send stats message with character's image
+        await callback_query.message.delete()
+        await callback_query.message.reply_photo(
+            photo=char_images[char],
+            caption=stats
+        )
+        await callback_query.answer("Warrior Selected!")
+    else:
+        await callback_query.answer("Invalid character selected!")
 
 print("Bot is running...")
 bot.run()
