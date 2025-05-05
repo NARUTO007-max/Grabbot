@@ -20,7 +20,7 @@ async def start_game(client, message):
         ]
     )
     await message.reply_photo(
-        photo="https://i.imgur.com/0Z8FvLF.jpg",
+        photo="https://files.catbox.moe/461mqe.jpg",
         caption="**Welcome to Battle Arena!**\nChoose your destiny and fight legendary enemies!",
         reply_markup=keyboard
     )
