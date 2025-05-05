@@ -124,7 +124,19 @@ async def final_character(client, callback_query):
         "byakuya": "https://files.catbox.moe/ilgdpy.jpg",
     }
 
-    stats = f"**{char.capitalize()} Selected!**\n\n**Level**: 1\n**Power**: 120\n**Defense**: 90\n**Speed**: 100\n\nLet the battles begin!"
+    stats = f"""**Congratulations! 🎉 You have unlocked {char_name}! 🌟**
+
+**Stats:**
+⚔️ Power: {power}
+🛡️ Defense: {defense}
+🎯 Focus: {focus}
+⚡️ Agility: {agility}
+🧠 Battle IQ: {battle_iq}
+🔮 Ki Manifestation: {ki_manifestation}
+
+**Moves Unlocked:**
+{moves}
+"""
 
     await callback_query.message.delete()
     await callback_query.message.reply_photo(
