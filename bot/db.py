@@ -38,3 +38,15 @@ def add_channel(user_id, channel_id, name, username):
 def get_user_channels(user_id):
     cur.execute("SELECT channel_name, channel_username FROM channels WHERE user_id=?", (user_id,))
     return cur.fetchall()
+
+def get_user_channels(user_id):
+    conn = sqlite3.connect("bot.db")
+    cursor = conn.cursor()
+    
+    cursor.execute("SELECT channel_username FROM channels WHERE user_id = ?", (user_id,))
+    results = cursor.fetchall()
+    
+    conn.close()
+    
+    # Return only the usernames as a list
+    return [row[0] for row in results]
