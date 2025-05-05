@@ -53,6 +53,38 @@ async def connect_channel(client, message: Message):
     )
     set_connected(message.from_user.id, 1)
 
+@bot.on_callback_query(filters.regex("channel_stats"))
+async def channel_stats_cb(client, callback_query):
+    user_id = callback_query.from_user.id
+    channels = get_user_channels(user_id)  # Ye function list of channel usernames return karega
+
+    if not channels:
+        await callback_query.message.edit_text("**You haven't connected any channels yet.**")
+        return
+
+    # Inline buttons banao har channel ke liye
+    buttons = [[InlineKeyboardButton(text=channel, url=f"https://t.me/{channel}")] for channel in channels]
+
+    # Ek back button bhi add karo
+    buttons.append([InlineKeyboardButton("⬅️ Back", callback_data="back_to_home")])
+
+    await callback_query.message.edit_text(
+        "**Your Connected Channels:**",
+        reply_markup=InlineKeyboardMarkup(buttons)
+    )
+
+@bot.on_callback_query(filters.regex("back_to_home"))
+async def back_to_home_cb(client, callback_query):
+    await callback_query.message.edit_text(
+        "**Here you can create rich posts, view stats and accomplish other tasks.**",
+        reply_markup=InlineKeyboardMarkup([
+            [InlineKeyboardButton("📝 Create Post", callback_data="create_post")],
+            [InlineKeyboardButton("📊 Channel Stats", callback_data="channel_stats")],
+            [InlineKeyboardButton("✏️ Edit Post", callback_data="edit_post")],
+            [InlineKeyboardButton("Help", callback_data="help")]
+        ])
+    )
+
 @bot.on_callback_query(filters.regex("help"))
 async def help_cb(client, callback_query):
     await callback_query.message.edit_text(
