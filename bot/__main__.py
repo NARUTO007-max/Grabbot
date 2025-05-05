@@ -56,7 +56,25 @@ async def connect_channel(client, message: Message):
 @bot.on_callback_query(filters.regex("help"))
 async def help_cb(client, callback_query):
     await callback_query.message.edit_text(
-        "**Help Menu**\n\n- Use 'Create Post' to craft a rich post\n- 'Edit Post' lets you modify existing posts\n- 'Channel Stats' shows how many channels you've connected"
+        "**Help Menu**\n\n"
+        "- Use '📝 Create Post' to craft a rich post\n"
+        "- '✏️ Edit Post' lets you modify existing posts\n"
+        "- '📊 Channel Stats' shows how many channels you've connected",
+        reply_markup=InlineKeyboardMarkup([
+            [InlineKeyboardButton("⬅️ Back", callback_data="back_to_home")]
+        ])
+    )
+
+@bot.on_callback_query(filters.regex("help"))
+async def help_cb(client, callback_query):
+    await callback_query.message.edit_text(
+        "**Help Menu**\n\n"
+        "- Use '📝 Create Post' to craft a rich post\n"
+        "- '✏️ Edit Post' lets you modify existing posts\n"
+        "- '📊 Channel Stats' shows how many channels you've connected",
+        reply_markup=InlineKeyboardMarkup([
+            [InlineKeyboardButton("⬅️ Back", callback_data="back_to_home")]
+        ])
     )
 
 if __name__ == "__main__":
