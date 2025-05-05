@@ -200,10 +200,10 @@ async def final_character(client, callback_query):
 {moves}
 """
 
-        # Send stats message
+        # Send stats message with character's image
         await callback_query.message.delete()
         await callback_query.message.reply_photo(
-            photo=f"https://files.catbox.moe/b0co3e.jpg",  # Replace with appropriate image URL
+            photo=char_image,  # Use character's specific image URL here
             caption=stats
         )
         await callback_query.answer("Warrior Selected!")
