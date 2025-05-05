@@ -200,15 +200,16 @@ async def final_character(client, callback_query):
 {moves}
 """
 
-        # Send stats message with character's image
-await callback_query.message.delete()
-await callback_query.message.reply_photo(
-    photo=char_images[char],
-    caption=stats
-)
-await callback_query.answer("Warrior Selected!")
-    else:
-        await callback_query.answer("Invalid character selected!")
+        if char in char_images:
+    # Send stats message with character's image
+    await callback_query.message.delete()
+    await callback_query.message.reply_photo(
+        photo=char_images[char],
+        caption=stats
+    )
+    await callback_query.answer("Warrior Selected!")
+else:
+    await callback_query.answer("Invalid character selected!")
 
 print("Bot is running...")
 bot.run()
