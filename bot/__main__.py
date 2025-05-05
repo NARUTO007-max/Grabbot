@@ -55,7 +55,7 @@ async def continue_game(client, callback_query):
 async def choose_verse(client, callback_query):
     keyboard = InlineKeyboardMarkup(
         [
-            [InlineKeyboardButton("Naruto", callback_query="verse_naruto")],
+            [InlineKeyboardButton("Naruto", callback_data="verse_naruto")],
             [InlineKeyboardButton("One Piece", callback_query="verse_onepiece")],
             [InlineKeyboardButton("Bleach", callback_query="verse_bleach")]
         ]
