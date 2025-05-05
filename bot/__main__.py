@@ -47,13 +47,13 @@ async def receive_caption(client, message: Message):
     user_creating_post[user_id]['media'] = message.photo or message.video
     user_creating_post[user_id]['media_type'] = 'photo' if message.photo else 'video'
 
-            await message.reply(
-                "**Your post is ready! Do you want to send it now to a connected channel?**",
-                reply_markup=InlineKeyboardMarkup([
-                    [InlineKeyboardButton("✅ Yes, Send", callback_data="confirm_post")],
-                    [InlineKeyboardButton("❌ Cancel", callback_data="back_to_home")]
-                ])
-            )
+    await message.reply(
+        "**Your post is ready! Do you want to send it now to a connected channel?**",
+        reply_markup=InlineKeyboardMarkup([
+            [InlineKeyboardButton("✅ Yes, Send", callback_data="confirm_post")],
+            [InlineKeyboardButton("❌ Cancel", callback_data="back_to_home")]
+        ])
+    )
         else:
             await message.reply("Please send a valid photo or video.")
 
@@ -84,10 +84,14 @@ async def confirm_post_cb(client, callback_query):
                 else:
                     media = data['media'][-1].file_id if isinstance(data['media'], list) else data['media'].file_id
 
-if data['media_type'] == 'photo':
-    await bot.send_photo(channel_id, photo=media, caption=data['caption'])
-else:
-    await bot.send_video(channel_id, video=media, caption=data['caption'])
+try:
+    if data['media']:
+        media = data['media'][-1].file_id if isinstance(data['media'], list) else data['media'].file_id
+
+        if data['media_type'] == 'photo':
+            await bot.send_photo(channel_id, photo=media, caption=data['caption'])
+        else:
+            await bot.send_video(channel_id, video=media, caption=data['caption'])
         except Exception as e:
             print(f"Error sending to {channel_id}: {e}")
 
