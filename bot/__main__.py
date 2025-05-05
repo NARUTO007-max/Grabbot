@@ -1,9 +1,10 @@
 from pyrogram import Client, filters
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 
-api_id = int(input("25698862: "))
-api_hash = input("7d7739b44f5f8c825d48cc6787889dbc: ")
-bot_token = input("8068521367:AAFHqYZnf7DnsSWFpN8bk_ffJ5Qe3giRbNw: ")
+# CONFIG (direct values ya environment variable se le sakte ho if needed)
+api_id = 25698862
+api_hash = "7d7739b44f5f8c825d48cc6787889dbc"
+bot_token = "8068521367:AAFHqYZnf7DnsSWFpN8bk_ffJ5Qe3giRbNw"
 
 bot = Client(
     "battle_game_bot",
