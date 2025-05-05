@@ -124,7 +124,69 @@ async def final_character(client, callback_query):
         "byakuya": "https://files.catbox.moe/ilgdpy.jpg",
     }
 
-    stats = f"""**Congratulations! 🎉 You have unlocked {char_name}! 🌟**
+    # Character data (character name and stats)
+    characters = {
+        "naruto": {
+            "name": "Naruto Uzumaki", 
+            "power": 120, "defense": 90, "focus": 85, "agility": 95, "battle_iq": 75, "ki_manifestation": 80,
+            "moves": "Rasengan, Shadow Clone Jutsu"
+        },
+        "sasuke": {
+            "name": "Sasuke Uchiha", 
+            "power": 130, "defense": 85, "focus": 90, "agility": 90, "battle_iq": 95, "ki_manifestation": 85,
+            "moves": "Chidori, Fireball Jutsu"
+        },
+        "kakashi": {
+            "name": "Kakashi Hatake", 
+            "power": 115, "defense": 100, "focus": 95, "agility": 80, "battle_iq": 100, "ki_manifestation": 90,
+            "moves": "Kamui, Lightning Blade"
+        },
+        "luffy": {
+            "name": "Monkey D. Luffy", 
+            "power": 140, "defense": 85, "focus": 80, "agility": 110, "battle_iq": 70, "ki_manifestation": 75,
+            "moves": "Gomu Gomu no Pistol, Gear Second"
+        },
+        "zoro": {
+            "name": "Roronoa Zoro", 
+            "power": 130, "defense": 95, "focus": 85, "agility": 85, "battle_iq": 80, "ki_manifestation": 90,
+            "moves": "Santoryu, Asura"
+        },
+        "sanji": {
+            "name": "Vinsmoke Sanji", 
+            "power": 125, "defense": 90, "focus": 95, "agility": 100, "battle_iq": 85, "ki_manifestation": 80,
+            "moves": "Diable Jambe, Sky Walk"
+        },
+        "ichigo": {
+            "name": "Ichigo Kurosaki", 
+            "power": 135, "defense": 80, "focus": 95, "agility": 90, "battle_iq": 85, "ki_manifestation": 85,
+            "moves": "Getsuga Tensho, Bankai"
+        },
+        "rukia": {
+            "name": "Rukia Kuchiki", 
+            "power": 110, "defense": 85, "focus": 90, "agility": 80, "battle_iq": 95, "ki_manifestation": 80,
+            "moves": "Sode no Shirayuki"
+        },
+        "byakuya": {
+            "name": "Byakuya Kuchiki", 
+            "power": 125, "defense": 100, "focus": 95, "agility": 85, "battle_iq": 100, "ki_manifestation": 95,
+            "moves": "Senbonzakura Kageyoshi"
+        }
+    }
+
+    # Get character data
+    char_data = characters.get(char)
+
+    if char_data:
+        char_name = char_data["name"]
+        power = char_data["power"]
+        defense = char_data["defense"]
+        focus = char_data["focus"]
+        agility = char_data["agility"]
+        battle_iq = char_data["battle_iq"]
+        ki_manifestation = char_data["ki_manifestation"]
+        moves = char_data["moves"]
+
+        stats = f"""**Congratulations! 🎉 You have unlocked {char_name}! 🌟**
 
 **Stats:**
 ⚔️ Power: {power}
@@ -138,12 +200,15 @@ async def final_character(client, callback_query):
 {moves}
 """
 
-    await callback_query.message.delete()
-    await callback_query.message.reply_photo(
-        photo=char_images.get(char, "https://your-image-url.com/default.jpg"),
-        caption=stats
-    )
-    await callback_query.answer("Warrior Selected!")
+        # Send stats message
+        await callback_query.message.delete()
+        await callback_query.message.reply_photo(
+            photo=f"https://files.catbox.moe/b0co3e.jpg",  # Replace with appropriate image URL
+            caption=stats
+        )
+        await callback_query.answer("Warrior Selected!")
+    else:
+        await callback_query.answer("Invalid character selected!")
 
 print("Bot is running...")
 bot.run()
