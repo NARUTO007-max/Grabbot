@@ -65,15 +65,15 @@ async def help_cb(client, callback_query):
         ])
     )
 
-@bot.on_callback_query(filters.regex("help"))
-async def help_cb(client, callback_query):
+@bot.on_callback_query(filters.regex("back_to_home"))
+async def back_to_home_cb(client, callback_query):
     await callback_query.message.edit_text(
-        "**Help Menu**\n\n"
-        "- Use '📝 Create Post' to craft a rich post\n"
-        "- '✏️ Edit Post' lets you modify existing posts\n"
-        "- '📊 Channel Stats' shows how many channels you've connected",
+        "**Here you can create rich posts, view stats and accomplish other tasks.**",
         reply_markup=InlineKeyboardMarkup([
-            [InlineKeyboardButton("⬅️ Back", callback_data="back_to_home")]
+            [InlineKeyboardButton("📝 Create Post", callback_data="create_post")],
+            [InlineKeyboardButton("📊 Channel Stats", callback_data="channel_stats")],
+            [InlineKeyboardButton("✏️ Edit Post", callback_data="edit_post")],
+            [InlineKeyboardButton("Help", callback_data="help")]
         ])
     )
 
