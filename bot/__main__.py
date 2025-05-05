@@ -56,11 +56,11 @@ async def choose_verse(client, callback_query):
     keyboard = InlineKeyboardMarkup(
         [
             [InlineKeyboardButton("Naruto", callback_data="verse_naruto")],
-            [InlineKeyboardButton("One Piece", callback_query="verse_onepiece")],
-            [InlineKeyboardButton("Bleach", callback_query="verse_bleach")]
+            [InlineKeyboardButton("One Piece", callback_data="verse_onepiece")],
+            [InlineKeyboardButton("Bleach", callback_data="verse_bleach")]
         ]
     )
-    await callback_query.message.delete()
+    await callback_query.message.edit_text("Choose your verse:", reply_markup=keyboard)
     await callback_query.message.reply_photo(
         photo="https://files.catbox.moe/b0co3e.jpg",  # tu yahan apni anime verse image daal
         caption="**Choose your Anime Verse for training:**",
