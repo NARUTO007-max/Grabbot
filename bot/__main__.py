@@ -176,7 +176,7 @@ async def final_character(client, callback_query):
     # Get character data
     char_data = characters.get(char)
 
-    if char_data:
+if char_data:
     char_name = char_data["name"]
     power = char_data["power"]
     defense = char_data["defense"]
@@ -201,7 +201,6 @@ async def final_character(client, callback_query):
 """
 
     if char in char_images:
-        # Send stats message with character's image
         await callback_query.message.delete()
         await callback_query.message.reply_photo(
             photo=char_images[char],
