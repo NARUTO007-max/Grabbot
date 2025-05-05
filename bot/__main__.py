@@ -109,15 +109,15 @@ async def final_character(client, callback_query):
 
     # Dummy image URLs for characters
     char_images = {
-        "naruto": "https://your-image-url.com/naruto.jpg",
-        "sasuke": "https://your-image-url.com/sasuke.jpg",
-        "kakashi": "https://your-image-url.com/kakashi.jpg",
-        "luffy": "https://your-image-url.com/luffy.jpg",
-        "zoro": "https://your-image-url.com/zoro.jpg",
-        "sanji": "https://your-image-url.com/sanji.jpg",
-        "ichigo": "https://your-image-url.com/ichigo.jpg",
-        "rukia": "https://your-image-url.com/rukia.jpg",
-        "byakuya": "https://your-image-url.com/byakuya.jpg",
+        "naruto": "https://files.catbox.moe/lk4n3b.jpg",
+        "sasuke": "https://files.catbox.moe/di4o7h.jpg",
+        "kakashi": "https://files.catbox.moe/mwife4.jpg",
+        "luffy": "https://files.catbox.moe/v76o15.jpg",
+        "zoro": "https://files.catbox.moe/ik5x9k.jpg",
+        "sanji": "https://files.catbox.moe/xye0wp.jpg",
+        "ichigo": "https://files.catbox.moe/8bcu89.jpg",
+        "rukia": "https://files.catbox.moe/v1udxj.jpg",
+        "byakuya": "https://files.catbox.moe/ilgdpy.jpg",
     }
 
     stats = f"**{char.capitalize()} Selected!**\n\n**Level**: 1\n**Power**: 120\n**Defense**: 90\n**Speed**: 100\n\nLet the battles begin!"
