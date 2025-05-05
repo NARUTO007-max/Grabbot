@@ -60,9 +60,13 @@ async def choose_verse(client, callback_query):
             [InlineKeyboardButton("Bleach", callback_data="verse_bleach")]
         ]
     )
-    await callback_query.message.edit_text("Choose your verse:", reply_markup=keyboard)
+
+    # Delete previous message to avoid duplication
+    await callback_query.message.delete()
+
+    # Send only one message with photo and keyboard
     await callback_query.message.reply_photo(
-        photo="https://files.catbox.moe/b0co3e.jpg",  # tu yahan apni anime verse image daal
+        photo="https://files.catbox.moe/b0co3e.jpg",  # verse selection image
         caption="**Choose your Anime Verse for training:**",
         reply_markup=keyboard
     )
