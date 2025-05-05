@@ -82,11 +82,12 @@ async def confirm_post_cb(client, callback_query):
                 if isinstance(data['media'], list):  # photo is a list of sizes
                     media = data['media'][-1].file_id
                 else:
-                    media = data['media'].file_id
-                if message.photo:
-                    await bot.send_photo(channel_id, photo=media, caption=data['caption'])
-                else:
-                    await bot.send_video(channel_id, video=media, caption=data['caption'])
+                    media = data['media'][-1].file_id if isinstance(data['media'], list) else data['media'].file_id
+
+if data['media_type'] == 'photo':
+    await bot.send_photo(channel_id, photo=media, caption=data['caption'])
+else:
+    await bot.send_video(channel_id, video=media, caption=data['caption'])
         except Exception as e:
             print(f"Error sending to {channel_id}: {e}")
 
