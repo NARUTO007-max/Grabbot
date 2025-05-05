@@ -203,7 +203,7 @@ async def final_character(client, callback_query):
         # Send stats message with character's image
         await callback_query.message.delete()
         await callback_query.message.reply_photo(
-            photo=char_image,  # Use character's specific image URL here
+            photo=char_images,  # Use character's specific image URL here
             caption=stats
         )
         await callback_query.answer("Warrior Selected!")
