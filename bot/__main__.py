@@ -41,7 +41,7 @@ async def start(client, message: Message):
             ])
         )
 
-@bot.on_message(filters.text("🔗 Connect Channel"))
+@bot.on_message(filters.text & filters.regex("^🔗 Connect Channel$"))
 async def connect_channel(client, message: Message):
     await message.reply(
         "**To connect a channel:**\n\n1. Add me to your channel as admin.\n2. Promote me with post and edit rights.\n3. Then /start the bot again.",
