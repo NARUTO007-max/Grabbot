@@ -419,3 +419,165 @@ async def receive_bid_amount(client, message):
 
         except ValueError:
             await message.reply("❌ Please send a valid number for bid amount!")
+
+auction_active = False 
+submission_active = False 
+
+
+@bot.on_message(filters.command("clear"), group=5) 
+async def clear_all(client, message):
+    owner_id = 7019600964
+
+    if not owner_id:
+        return 
+
+
+    await approved_items_collection.delete_many({}) 
+    await message.reply_text(" DONE CLEARATION") 
+
+# **Start Command**
+@bot.on_message(filters.command("start"), group=5)
+async def start(client, message):
+    user_id = int(message.from_user.id) 
+    if await users_collection.find_one({"_id": user_id}):
+        return  
+    await message.reply(
+        photo="https://files.catbox.moe/0bs5aq.jpg",
+        caption=(
+            f"𝗪𝗲𝗹𝗰𝗼𝗺𝗲 𝘁𝗼 𝗚𝗢𝗗 𝗛𝗲𝘅𝗮 𝗔𝘂𝗰𝘁𝗶𝗼𝗻 𝗕𝗼𝘁🔮 {message.from_user.first_name}\n\n"  
+            "◆ 𝗠𝗲𝗴𝗮 𝗕𝗼𝘁 𝗳𝗼𝗿 𝘂𝘀𝗲𝗱 𝘁𝗼 𝗺𝗮𝗻𝗮𝗴𝗲 𝗜𝘁𝗲𝗺𝘀 𝗶𝗻 𝗚𝗢𝗗 𝗛𝗲𝘅𝗮 𝗔𝘂𝗰𝘁𝗶𝗼𝗻 🍁\n\n"  
+            "◆ 𝗬𝗼𝘂 𝗰𝗮𝗻 𝗯𝘂𝘆/𝘀𝗲𝗹𝗹 𝗛𝗲𝘅𝗮 𝗜𝘁𝗲𝗺𝘀 𝗨𝘀𝗶𝗻𝗴 𝗧𝗵𝗶𝘀 𝗕𝗼𝘁.\n\n" 
+            "◆ Do compulsory  💫\n\n"  
+            "◆ Must Join Both Group And Channels 🍁\n"  
+            "Link Below 💥\n\n" 
+            "Use /add to add Various Hexa Items In auction ✨\n\n" 
+            "ɴᴏᴡ, ᴡᴇ ᴀʀᴇ ꜰᴀᴍɪʟʏ💕"
+        ),
+        reply_markup=InlineKeyboardMarkup([
+            [InlineKeyboardButton("𝗚𝗥𝗢𝗨𝗣🐉", url="https://t.me/Trainers_union")],
+            [InlineKeyboardButton("𝗖𝗛𝗔𝗡𝗡𝗘𝗟🔮", url="https://t.me/God_Auction")]
+        ])
+                       )
+
+    if message.chat.type != ChatType.PRIVATE:
+        await message.reply_text("\"𝙐𝙎𝙀 𝙏𝙃𝙄𝙎 𝘾𝙊𝙈𝙈𝘼𝙉𝘿 𝙊𝙉𝙇𝙔 𝙄𝙉 𝘿𝙈🔮\"") 
+        return 
+    await message.reply_photo(
+        photo="https://files.catbox.moe/0bs5aq.jpg",
+        caption=(
+            f"𝗪𝗲𝗹𝗰𝗼𝗺𝗲 𝘁𝗼 𝗚𝗢𝗗 𝗛𝗲𝘅𝗮 𝗔𝘂𝗰𝘁𝗶𝗼𝗻 𝗕𝗼𝘁🔮 {message.from_user.first_name}\n\n"  
+            "◆ 𝗠𝗲𝗴𝗮 𝗕𝗼𝘁 𝗳𝗼𝗿 𝘂𝘀𝗲𝗱 𝘁𝗼 𝗺𝗮𝗻𝗮𝗴𝗲 𝗜𝘁𝗲𝗺𝘀 𝗶𝗻 𝗚𝗢𝗗 𝗛𝗲𝘅𝗮 𝗔𝘂𝗰𝘁𝗶𝗼𝗻 🍁\n\n"  
+            "◆ 𝗬𝗼𝘂 𝗰𝗮𝗻 𝗯𝘂𝘆/𝘀𝗲𝗹𝗹 𝗛𝗲𝘅𝗮 𝗜𝘁𝗲𝗺𝘀 𝗨𝘀𝗶𝗻𝗴 𝗧𝗵𝗶𝘀 𝗕𝗼𝘁.\n\n" 
+            "◆ Do compulsory  💫\n\n"  
+            "◆ Must Join Both Group And Channels 🍁\n"  
+            "Link Below 💥\n\n" 
+            "Use /add to add Various Hexa Items In auction ✨\n\n" 
+            "ɴᴏᴡ, ᴡᴇ ᴀʀᴇ ꜰᴀᴍɪʟʏ💕"
+        ),
+        reply_markup=InlineKeyboardMarkup([
+            [InlineKeyboardButton("𝗚𝗥𝗢𝗨𝗣🐉", url="https://t.me/Trainers_union")],
+            [InlineKeyboardButton("𝗖𝗛𝗔𝗡𝗡𝗘𝗟🔮", url="https://t.me/God_Auction")]
+        ])
+    )
+
+    await users_collection.insert_one({"_id": user_id}) 
+
+
+@bot.on_message(filters.command("rules"), group=5)
+async def rules(client, message):
+    """Sends the auction rules."""
+    await message.reply_text(
+        "<blockquote>★ God Auction Bid Rules\n\n"
+        "• 20% Of bid amount will be taken as fine for removing bid\n"
+        "• 10% if bid was over 100k\n"
+        "• Under 3 hours you will have to /report for removing your bids else after 3 hours direct ban or 10k Fine.\n\n"
+        "★ God Auction Submission Rules\n\n"
+        "• 80% Of highest bid amount PD will be taken as fine for removing your approved pokes from the auction\n"
+        "• Your items can be cancelled for free if you report when your item is pending.\n"
+        "• Under 5 hours you will have to /report for removing your approved item else after 5 hours direct ban or 20k Fine.\n\n"
+        "For Any Queries 📞 Contact With our Staff by Command (/staff) or (/report)</blockquote>", 
+        parse_mode=ParseMode.HTML
+    )
+
+
+@bot.on_message(filters.command("start_auction") & filters.user(OWNER_IDS), group=5)
+async def start_auction(client, message):
+    global auction_active
+    if auction_active:
+        return await message.reply("⚠️ **Auction is already active!**")
+
+    auction_active = True
+    await message.reply("✅ **Auction has started!** Now you can bid and submit Pokémon.")
+
+@bot.on_message(filters.command("end_auction") & filters.user(OWNER_IDS), group=5)
+async def end_auction(client, message):
+    global auction_active
+    if not auction_active:
+        return await message.reply("⚠️ **No active auction to end!**")
+
+    auction_active = False
+    await message.reply("❌ **Auction has ended!** No further bids or submissions allowed.")
+
+@bot.on_message(filters.command("start_submission") & filters.user(OWNER_IDS), group=5)
+async def start_submission(client, message):
+    global submission_active
+    if submission_active:
+        return await message.reply("⚠️ **Submission is already active!**")
+
+    submission_active = True
+    await message.reply("✅ **Pokémon submission is now open!** Use `/add` to submit.")
+
+@bot.on_message(filters.command("end_submission") & filters.user(OWNER_IDS), group=5)
+async def end_submission(client, message):
+    global submission_active
+    if not submission_active:
+        return await message.reply("⚠️ **No active submission process to end!**")
+
+    submission_active = False
+    await message.reply("❌ **Submission is now closed!** No further Pokémon can be submitted.")
+
+
+@bot.on_message(filters.command("items"), group=5)
+async def list_items(client, message):
+    """Lists all approved Pokémon categorized properly."""
+    approved_items = await approved_items_collection.find().to_list(length=None)
+
+    categories = {
+        "⭐ Legendary Pokémon": [],
+        "🔹 Non-Legendary Pokémon": [],
+        "✨ Shiny Pokémon": [],
+        "💳 Tms": []
+    }
+
+    for item in approved_items:
+        category = item.get("type")
+        name = item.get('tms_info') and item.get("name") 
+        msg_id = item.get("auction_id")
+        link = f"https://{AUCTION_CHANNEL_LINK}/{msg_id}"
+
+        if category == "legendary":
+            categories["⭐ Legendary Pokémon"].append(f"🔸 [{name}]({link})")
+        elif category == "nonlegendary":
+            categories["🔹 Non-Legendary Pokémon"].append(f"🔹 [{name}]({link})")
+        elif category == "shiny":
+            categories["✨ Shiny Pokémon"].append(f"✨ [{name}]({link})")
+        elif category == "tms":
+            categories["💳 TMs"].append(f"💳 [{name}]({link})")
+
+    # ✅ **Format and Send the Message**
+    items_text = "**📜 Approved Pokémon in Auction**\n\n"
+    for category, items in categories.items():
+        if items:
+            items_text += f"**{category}:**\n" + "\n".join(items) + "\n\n"
+
+    if not any(categories.values()):
+        items_text += "❌ No approved Pokémon available for bidding yet."
+
+    await message.reply_text(items_text,  disable_web_page_preview=True)
+
+# **Safe Message Sending**
+async def send_message_safe(client, chat_id, text, reply_markup=None):
+    try:
+        await client.send_message(chat_id, text, reply_markup=reply_markup)
+    except Exception as e:
+        logging.error(f"Failed to send message to {chat_id}: {e}")
