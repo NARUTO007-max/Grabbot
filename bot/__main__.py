@@ -210,5 +210,39 @@ async def final_character(client, callback_query):
         else:
             await callback_query.answer("Invalid character selected!")
 
+@bot.on_message(filters.command("profile") & filters.private)
+async def profile_handler(client, message):
+    user_id = message.from_user.id
+    name = message.from_user.first_name
+
+    # Dummy user data with external image URL
+    user_data = {
+        "level": 12,
+        "coins": 18750,
+        "gems": 40,
+        "unlocked": ["Naruto", "Sasuke", "Ichigo"],
+        "equipped": "Naruto",
+        "char_image": "https://files.catbox.moe/lk4n3b.jpg"  # Yeh link user se set hoga future mein
+    }
+
+    caption = f"""**Shinobi Profile for {name}** 🔥
+
+**Level:** {user_data['level']}
+**Equipped:** {user_data['equipped']}
+**Coins:** {user_data['coins']} 🪙
+**Gems:** {user_data['gems']} 💎
+
+**Unlocked Fighters:**
+{', '.join(user_data['unlocked'])}
+"""
+
+    buttons = [[InlineKeyboardButton("Main Menu", callback_data="main_menu")]]
+
+    await message.reply_photo(
+        photo=user_data["https://files.catbox.moe/b0co3e.jpg"],  # Yeh image link user ka hi hoga
+        caption=caption,
+        reply_markup=InlineKeyboardMarkup(buttons)
+    )
+
 print("Bot is running...")
 bot.run()
