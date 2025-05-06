@@ -1,312 +1,314 @@
-import sqlite3
+import sys
+from pyrogram import idle
+from datetime import datetime
+from urllib.parse import quote_plus
+import random
+import os
+import time
+import asyncio
+import logging
+from datetime import datetime
+from pyrogram.enums import ChatType, ParseMode
 from pyrogram import Client, filters
-from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+from config import API_ID, API_HASH, BOT_TOKEN, AUCTION_GROUP_LINK, AUCTION_CHANNEL_ID, AUCTION_CHANNEL_LINK, COOLDOWN_TIME, OWNER_IDS, APPROVAL_GROUP_ID
+from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton, Message
+from pymongo import MongoClient
+from AB.db import (
+    users_collection,
+    admins_collection,
+    pending_submissions,
+    cooldowns_collection,
+    submissions_collection,
+    approved_items_collection,
+    bids_collection,
+    save_submission_to_db,
+    get_submission_from_db,
+    get_user,
+    add_user,
+    update_user_stats,
+    is_admin,
+    add_admin,
+    remove_admin,
+    set_cooldown,
+    get_cooldown,
+    add_submission,
+    place_bid
+)
+from bot import bot
 
-# Config
-api_id = 25698862
-api_hash = "7d7739b44f5f8c825d48cc6787889dbc"
-bot_token = "8068521367:AAFHqYZnf7DnsSWFpN8bk_ffJ5Qe3giRbNw"
 
-bot = Client("battle_game_bot", api_id=api_id, api_hash=api_hash, bot_token=bot_token)
+# 🔹 Profile Templates (Template Number: Image Link)
+profile_templates = {
+    1: "https://files.catbox.moe/a8ud2n.jpg",
+    2: "https://files.catbox.moe/jgjfjv.jpg",
+    3: "https://files.catbox.moe/l46mcp.jpg",
+    4: "https://files.catbox.moe/7mcf3g.jpg",
+    5: "https://files.catbox.moe/rl6o0z.jpg",
+    6: "https://files.catbox.moe/j309ys.jpg",
+    7: "https://files.catbox.moe/rapqog.jpg",
+    8: "https://files.catbox.moe/up2yq5.jpg",
+    9: "https://files.catbox.moe/ata5gt.jpg",
+    10: "https://files.catbox.moe/m3vtbn.jpg",
+    11: "https://files.catbox.moe/wjx1eq.jpg",
+    12: "https://files.catbox.moe/2u8gsa.jpg",
+    13: "https://files.catbox.moe/a7pitn.jpg",
+    14: "https://files.catbox.moe/ulkl4s.jpg",
+    15: "https://files.catbox.moe/wskaum.jpg",
+16: "https://files.catbox.moe/62uskb.jpg",
+17: "https://files.catbox.moe/oo7kjv.jpg",
+18: "https://files.catbox.moe/v2xf87.jpg",
+}
 
-# Initialize DB
-conn = sqlite3.connect("users.db")
-cursor = conn.cursor()
-cursor.execute("CREATE TABLE IF NOT EXISTS users (user_id INTEGER PRIMARY KEY, name TEXT)")
-conn.commit()
+default_profile_image = "https://files.catbox.moe/a8ud2n.jpg"  # default image
+user_templates = {}  # user_id: template_number
 
-@bot.on_message(filters.command("start") & filters.private)
-async def start_game(client, message):
-    user_id = message.from_user.id
-    name = message.from_user.first_name
 
-    cursor.execute("SELECT * FROM users WHERE user_id = ?", (user_id,))
-    user = cursor.fetchone()
+@bot.on_message(filters.command("profile"), group=5)
+async def profile_command(bot, message):
+    user = message.from_user
+    name = user.first_name or "N/A"
+    username = f"@{user.username}" if user.username else "N/A"
+    userid = user.id
 
-    if user:
-        await message.reply_text("** 🌟 You already started the bot! 🌟**")
-        return
+    # Dummy data (replace with actual database values)
+    total_shiny = await approved_items_collection.count_documents({"user_id": userid, "type": "shiny"})
+    total_legendary = await approved_items_collection.count_documents({"user_id": userid, "type": "legendary"})
+    total_non_legendary = await approved_items_collection.count_documents({"user_id": userid, "type": "non-legendary"})
+    total_tms = 0
+    total_teams = 0
+    total_approved = total_shiny + total_legendary + total_non_legendary + total_tms + total_teams
+    approved_ratio = f"{(total_approved / (total_approved + 0)) * 100:.2f}%" if total_approved > 0 else "0%"
 
-    # New user: add to DB
-    cursor.execute("INSERT INTO users (user_id, name) VALUES (?, ?)", (user_id, name))
-    conn.commit()
 
-    keyboard = InlineKeyboardMarkup(
-        [[InlineKeyboardButton("Start Game", callback_data="start_game")]]
+
+    caption = f"""(VERIFIED ✅)
+
+★ PROFILE ★
+═════════════════════
+
+➤ Name: {name}
+➤ Username: {username}
+➤ User ID: {userid}
+
+──────────────
+Total Approved Items:
+
+➤ Shiny: {total_shiny}
+➤ Legendary: {total_legendary}
+➤ Non-Legendary: {total_non_legendary}
+
+──────────────
+➤ Total Approved : {total_approved}
+──────────────
+➤ Approved Ratio: {approved_ratio}
+──────────────
+"""
+
+    selected_template = user_templates.get(userid, 0)
+    profile_image = profile_templates.get(selected_template, default_profile_image)
+
+    buttons = InlineKeyboardMarkup(
+        [
+            [
+                InlineKeyboardButton("Close", callback_data="close_profile"),
+                InlineKeyboardButton("Change Template", callback_data="change_template")
+            ]
+        ]
     )
 
     await message.reply_photo(
-        photo="https://files.catbox.moe/461mqe.jpg",
-        caption=f"**Welcome {message.from_user.first_name} to Battle Arena!**\nChoose your destiny and fight legendary enemies!",
-        reply_markup=keyboard
-    )
-
-@bot.on_callback_query(filters.regex("start_game"))
-async def continue_game(client, callback_query):
-    await callback_query.message.edit_caption(
-        "**Your journey begins now...**\nAre you ready to train?",
-        reply_markup=InlineKeyboardMarkup(
-            [[InlineKeyboardButton("Continue", callback_data="continue_journey")]]
-        )
-    )
-    await callback_query.answer()
-
-@bot.on_callback_query(filters.regex("continue_journey"))
-async def choose_verse(client, callback_query):
-    keyboard = InlineKeyboardMarkup(
-        [
-            [InlineKeyboardButton("Naruto", callback_data="verse_naruto")],
-            [InlineKeyboardButton("One Piece", callback_data="verse_onepiece")],
-            [InlineKeyboardButton("Bleach", callback_data="verse_bleach")]
-        ]
-    )
-
-    # Delete previous message to avoid duplication
-    await callback_query.message.delete()
-
-    # Send only one message with photo and keyboard
-    await callback_query.message.reply_photo(
-        photo="https://files.catbox.moe/b0co3e.jpg",  # verse selection image
-        caption="**Choose your Anime Verse for training:**",
-        reply_markup=keyboard
-    )
-    await callback_query.answer()
-
-@bot.on_callback_query(filters.regex("verse_(naruto|onepiece|bleach)"))
-async def choose_character(client, callback_query):
-    verse = callback_query.data.split("_")[1]
-
-    # Character data
-    characters = {
-        "naruto": [
-            ("Naruto Uzumaki", "char_naruto"),
-            ("Sasuke Uchiha", "char_sasuke"),
-            ("Kakashi Hatake", "char_kakashi")
-        ],
-        "onepiece": [
-            ("Luffy", "char_luffy"),
-            ("Zoro", "char_zoro"),
-            ("Sanji", "char_sanji")
-        ],
-        "bleach": [
-            ("Ichigo", "char_ichigo"),
-            ("Rukia", "char_rukia"),
-            ("Byakuya", "char_byakuya")
-        ]
-    }
-
-    keyboard = InlineKeyboardMarkup(
-        [[InlineKeyboardButton(name, callback_data=data)] for name, data in characters[verse]]
-    )
-
-    await callback_query.message.delete()
-    await callback_query.message.reply_photo(
-        photo=f"https://files.catbox.moe/b0co3e.jpg",  # yahan per tu har verse ke characters ki photo laga
-        caption=f"**{verse.capitalize()} Verse Selected!**\nNow choose your warrior:",
-        reply_markup=keyboard
-    )
-    await callback_query.answer()
-
-@bot.on_callback_query(filters.regex("char_"))
-async def final_character(client, callback_query):
-    char = callback_query.data.split("_")[1]
-
-    # Dummy image URLs for characters
-    char_images = {
-        "naruto": "https://files.catbox.moe/lk4n3b.jpg",
-        "sasuke": "https://files.catbox.moe/di4o7h.jpg",
-        "kakashi": "https://files.catbox.moe/mwife4.jpg",
-        "luffy": "https://files.catbox.moe/v76o15.jpg",
-        "zoro": "https://files.catbox.moe/ik5x9k.jpg",
-        "sanji": "https://files.catbox.moe/xye0wp.jpg",
-        "ichigo": "https://files.catbox.moe/8bcu89.jpg",
-        "rukia": "https://files.catbox.moe/v1udxj.jpg",
-        "byakuya": "https://files.catbox.moe/ilgdpy.jpg",
-    }
-
-    # Character data (character name and stats)
-    characters = {
-        "naruto": {
-            "name": "Naruto Uzumaki", 
-            "power": 120, "defense": 90, "focus": 85, "agility": 95, "battle_iq": 75, "ki_manifestation": 80,
-            "moves": "Rasengan, Shadow Clone Jutsu"
-        },
-        "sasuke": {
-            "name": "Sasuke Uchiha", 
-            "power": 130, "defense": 85, "focus": 90, "agility": 90, "battle_iq": 95, "ki_manifestation": 85,
-            "moves": "Chidori, Fireball Jutsu"
-        },
-        "kakashi": {
-            "name": "Kakashi Hatake", 
-            "power": 115, "defense": 100, "focus": 95, "agility": 80, "battle_iq": 100, "ki_manifestation": 90,
-            "moves": "Kamui, Lightning Blade"
-        },
-        "luffy": {
-            "name": "Monkey D. Luffy", 
-            "power": 140, "defense": 85, "focus": 80, "agility": 110, "battle_iq": 70, "ki_manifestation": 75,
-            "moves": "Gomu Gomu no Pistol, Gear Second"
-        },
-        "zoro": {
-            "name": "Roronoa Zoro", 
-            "power": 130, "defense": 95, "focus": 85, "agility": 85, "battle_iq": 80, "ki_manifestation": 90,
-            "moves": "Santoryu, Asura"
-        },
-        "sanji": {
-            "name": "Vinsmoke Sanji", 
-            "power": 125, "defense": 90, "focus": 95, "agility": 100, "battle_iq": 85, "ki_manifestation": 80,
-            "moves": "Diable Jambe, Sky Walk"
-        },
-        "ichigo": {
-            "name": "Ichigo Kurosaki", 
-            "power": 135, "defense": 80, "focus": 95, "agility": 90, "battle_iq": 85, "ki_manifestation": 85,
-            "moves": "Getsuga Tensho, Bankai"
-        },
-        "rukia": {
-            "name": "Rukia Kuchiki", 
-            "power": 110, "defense": 85, "focus": 90, "agility": 80, "battle_iq": 95, "ki_manifestation": 80,
-            "moves": "Sode no Shirayuki"
-        },
-        "byakuya": {
-            "name": "Byakuya Kuchiki", 
-            "power": 125, "defense": 100, "focus": 95, "agility": 85, "battle_iq": 100, "ki_manifestation": 95,
-            "moves": "Senbonzakura Kageyoshi"
-        }
-    }
-
-    # Get character data
-    char_data = characters.get(char)
-
-    if char_data:
-        char_name = char_data["name"]
-        power = char_data["power"]
-        defense = char_data["defense"]
-        focus = char_data["focus"]
-        agility = char_data["agility"]
-        battle_iq = char_data["battle_iq"]
-        ki_manifestation = char_data["ki_manifestation"]
-        moves = char_data["moves"]
-
-        stats = f"""**Congratulations! 🎉 You have unlocked {char_name}! 🌟**
-
-**Stats:**
-⚔️ Power: {power}
-🛡️ Defense: {defense}
-🎯 Focus: {focus}
-⚡️ Agility: {agility}
-🧠 Battle IQ: {battle_iq}
-🔮 Ki Manifestation: {ki_manifestation}
-
-**Moves Unlocked:**
-{moves}
-"""
-
-        if char in char_images:
-            await callback_query.message.delete()
-            await callback_query.message.reply_photo(
-                photo=char_images[char],
-                caption=stats
-            )
-            await callback_query.answer("Warrior Selected!")
-        else:
-            await callback_query.answer("Invalid character selected!")
-
-# User data storage
-user_profiles = {}
-user_selected_characters = {}
-
-# Character image (fixed for now)
-char_image = "https://files.catbox.moe/b0co3e.jpg"
-
-@bot.on_message(filters.command("profile") & filters.private)
-async def profile_handler(client, message):
-    user_id = message.from_user.id
-    name = message.from_user.first_name
-
-    selected_char = user_selected_characters.get(user_id)
-
-    if not selected_char:
-        await message.reply("You haven't chosen your character yet! Use /start to begin.")
-        return
-
-    if user_id not in user_profiles:
-        user_profiles[user_id] = {
-            "level": 1,
-            "coins": 0,
-            "gems": 0,
-            "unlocked": [selected_char.capitalize()],
-            "equipped": selected_char.capitalize()
-        }
-
-    user_data = user_profiles[user_id]
-
-    caption = f"""**Shinobi Profile for {name}** 🔥
-
-**Level:** {user_data['level']}
-**Equipped:** {user_data['equipped']}
-**Coins:** {user_data['coins']} 🪙
-**Gems:** {user_data['gems']} 💎
-
-**Unlocked Fighters:**
-{', '.join(user_data['unlocked'])}
-"""
-
-    buttons = [[InlineKeyboardButton("🏠 Main Menu", callback_data="main_menu")]]
-    await message.reply_photo(photo=char_image, caption=caption, reply_markup=InlineKeyboardMarkup(buttons))
-
-
-@bot.on_callback_query(filters.regex("main_menu"))
-async def main_menu_callback(client, callback_query):
-    await callback_query.answer("Opening Main Menu...")
-
-    await callback_query.message.edit_text(
-        "**Welcome to the Main Menu!** Choose an option:",
-        reply_markup=InlineKeyboardMarkup([
-            [InlineKeyboardButton("🗺️ Explore", callback_data="explore")],
-            [InlineKeyboardButton("🛍️ Shop", callback_data="shop")],
-            [InlineKeyboardButton("⚔️ Inventory", callback_data="inventory")],
-            [InlineKeyboardButton("📜 Profile", callback_data="profile_back")]
-        ])
+        photo=profile_image,
+        caption=caption,
+        reply_markup=buttons,
+        parse_mode=ParseMode.MARKDOWN
     )
 
 
-@bot.on_callback_query(filters.regex("profile_back"))
-async def profile_back(client, callback_query):
+@bot.on_callback_query(filters.regex("^(close_profile|change_template|template_\\d+|back_to_profile)$"))
+async def profile_callback_handler(client, callback_query):
+    data = callback_query.data
     user_id = callback_query.from_user.id
-    name = callback_query.from_user.first_name
+    total_shiny = await approved_items_collection.count_documents({"user_id": user_id, "type": "shiny"})
+    total_legendary = await approved_items_collection.count_documents({"user_id": user_id, "type": "legendary"})
+    total_non_legendary = await approved_items_collection.count_documents({"user_id": user_id, "type": "non-legendary"})
+    total_tms = 0
+    total_teams = 0
 
-    if user_id not in user_selected_characters:
-        await callback_query.answer("You haven't chosen your character yet! Use /start.")
-        return
+    total_approved = total_shiny + total_legendary + total_non_legendary + total_tms + total_teams
 
-    if user_id not in user_profiles:
-        selected_char = user_selected_characters[user_id]
-        user_profiles[user_id] = {
-            "level": 1,
-            "coins": 0,
-            "gems": 0,
-            "unlocked": [selected_char.capitalize()],
-            "equipped": selected_char.capitalize()
-        }
+    approved_ratio = f"{(total_approved / (total_approved + 0)) * 100:.2f}%" if total_approved > 0 else "0%"
 
-    user_data = user_profiles[user_id]
+    if data == "close_profile":
+        await callback_query.message.delete()
 
-    caption = f"""**Shinobi Profile for {name}** 🔥
+    elif data == "change_template":
+        buttons = []
+        row = []
+        for i in range(1, 16):
+            row.append(InlineKeyboardButton(str(i), callback_data=f"template_{i}"))
+            if i % 5 == 0:
+                buttons.append(row)
+                row = []
 
-**Level:** {user_data['level']}
-**Equipped:** {user_data['equipped']}
-**Coins:** {user_data['coins']} 🪙
-**Gems:** {user_data['gems']} 💎
+        if row:
+            buttons.append(row)
 
-**Unlocked Fighters:**
-{', '.join(user_data['unlocked'])}
+        buttons.append([InlineKeyboardButton("◀️ Back", callback_data="back_to_profile")])
+
+        await callback_query.message.edit_caption(
+            caption="**Select a template for your profile picture:**",
+            reply_markup=InlineKeyboardMarkup(buttons),
+            parse_mode=ParseMode.MARKDOWN
+        )
+
+    elif data == "back_to_profile":
+        selected_template = user_templates.get(user_id, 0)
+        profile_image = profile_templates.get(selected_template, default_profile_image)
+
+        # Restore original caption
+        caption = f"""(VERIFIED ✅)
+
+★ PROFILE ★
+═════════════════════
+
+➤ Name: {callback_query.from_user.first_name or "N/A"}
+➤ Username: @{callback_query.from_user.username if callback_query.from_user.username else "N/A"}
+➤ User ID: {user_id}
+
+──────────────
+Total Approved Items:
+
+➤ Shiny: {total_shiny}
+➤ Legendary: {total_legendary}
+➤ Non-Legendary: {total_non_legendary}
+
+──────────────
+➤ Total Approved : {total_approved}
+──────────────
+➤ Approved Ratio: {approved_ratio}
+──────────────
 """
 
-    await callback_query.message.edit_media(
-        media=InputMediaPhoto(media=char_image, caption=caption),
-        reply_markup=InlineKeyboardMarkup([
-            [InlineKeyboardButton("🏠 Main Menu", callback_data="main_menu")]
-        ])
+        buttons = InlineKeyboardMarkup(
+            [
+                [
+                    InlineKeyboardButton("Close", callback_data="close_profile"),
+                    InlineKeyboardButton("Change Template", callback_data="change_template")
+                ]
+            ]
+        )
+
+        await callback_query.message.edit_media(
+            media=InputMediaPhoto(media=profile_image, caption=caption, parse_mode=ParseMode.MARKDOWN),
+            reply_markup=buttons
+        )
+
+    elif data.startswith("template_"):
+        template_num = int(data.split("_")[1])
+        user_templates[user_id] = template_num
+        image_link = "https://files.catbox.moe/dqt2sw.jpg"
+
+        try:
+            await callback_query.message.edit_media(
+                media=InputMediaPhoto(media=image_link, caption=callback_query.message.caption, parse_mode=ParseMode.MARKDOWN),
+                reply_markup=InlineKeyboardMarkup(
+                    [
+                        [
+                            InlineKeyboardButton("Close", callback_data="close_profile"),
+                            InlineKeyboardButton("Change Template", callback_data="change_template")
+                        ]
+                    ]
+                )
+            )
+        except Exception:
+            await callback_query.answer("Failed to change template. Please try again later.", show_alert=True)
+
+@bot.on_message(filters.command("staff"), group=5)
+async def staff_command(client, message: Message):
+    text = "**God Auction Staff Team**\n\n"
+    text += "• Admin: [@God_X_Pawan](https://t.me/God_X_Pawan)\n"
+    text += "• Admin: [@Maicra007](https://t.me/Maicra007)\n"
+    text += "• Admin: [@One_n_only_1](https://t.me/One_n_only_1)\n"
+    text += "• Admin: [@Orewa_cursed](https://t.me/Orewa_cursed)\n"
+    await message.reply(text, disable_web_page_preview=True)
+
+@bot.on_message(filters.command("msg") & filters.user(OWNER_IDS), group=5)
+async def msg(client, message):
+    if len(message.command) < 3:
+        return await message.reply("❌ Usage: /msg <user_id> <your message>")
+
+    try:
+        user_id = int(message.command[1])
+        text = " ".join(message.command[2:])
+        await client.send_message(chat_id=user_id, text=f"✉️ Admin Message:\n\n{text}")
+        await message.reply("✅ Message sent.")
+    except Exception as e:
+        await message.reply(f"❌ Failed to send message.\nError: {e}")
+
+
+@bot.on_message(filters.command("report") & filters.private, group=5)
+async def repo(client, message):
+    __u__ = message.from_user
+    __n__ = __u__.first_name 
+    __id__ = __u__.id 
+
+    if len(message.command) < 2:
+        return await message.reply_text("❌ Please provide a reason or content for your report.")
+
+    __content__ = " ".join(message.command[1:])
+
+    report = (
+        f"🚨 **Report Received** 🚨\n"
+        f"👤 Name: {__n__}\n"
+        f"🆔 ID: `{__id__}`\n\n"
+        f"📝 **Report:**\n> {__content__}\n\n"
+        f"📩 *Click below to message the user:*"
     )
 
-print("Bot is running...")
-bot.run()
+    __key__ = InlineKeyboardMarkup([
+        [InlineKeyboardButton("MSG 📩", url=f"https://t.me/{client.me.username}?start=msg_{__id__}")]
+    ])
+
+    await message.reply_text("✅ Report sent to admins!")
+
+    for owner in OWNER_IDS:
+        await client.send_message(chat_id=owner, text=report, reply_markup=__key__, parse_mode="markdown")
+
+
+@bot.on_message(filters.command(["broadcast", "bcast"]) & filters.user(OWNER_IDS), group=5)
+async def broadcast_handler(client, message):
+    if len(message.command) < 2:
+        return await message.reply("❌ Usage: /broadcast Your message here")
+
+    text = message.text.split(None, 1)[1]
+
+    users = await users_collection.find().to_list(length=10000)
+    success = 0
+    failed = 0
+
+    for user in users:
+        try:
+            await bot.send_message(chat_id=user["_id"], text=text)
+            success += 1
+            await asyncio.sleep(0.1)
+        except:
+            failed += 1
+
+    await message.reply(f"✅ Broadcast sent to {success} users.\n❌ Failed to send to {failed} users.")
+
+@bot.on_message(filters.command("myitems"), group=5)
+async def my_items(client, message):
+    user_id = message.from_user.id
+
+    items = await approved_items_collection.find({"user_id": user_id}).to_list(length=100)
+
+    if not items:
+        return await message.reply("❌ You don't have any approved items in auction.")
+
+    text = f"📦 **Your Auction Items:**\n\n"
+    for i, item in enumerate(items, 1):
+        msg_id = item.get("auction_id")
+        link = f"https://t.me/{AUCTION_CHANNEL_LINK}/{msg_id}"
+        text += f"{i}. 🆔 [{item['item_id']}]({link}) | 💰 {item['base_price']} PD\n"
+
+    await message.reply(text, disable_web_page_preview=True)
