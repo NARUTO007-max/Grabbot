@@ -312,3 +312,110 @@ async def my_items(client, message):
         text += f"{i}. 🆔 [{item['item_id']}]({link}) | 💰 {item['base_price']} PD\n"
 
     await message.reply(text, disable_web_page_preview=True)
+
+@bot.on_message(filters.command("mybid"), group=5)
+async def my_bid(client, message):
+    user_id = message.from_user.id
+    user_name = message.from_user.first_name
+
+    bids = await approved_items_collection.find({"bidder": user_name}).to_list(length=100)
+
+    if not bids:
+        return await message.reply("❌ You haven't placed any bids yet.")
+
+    text = f"🧾 **Your Bids, {user_name}:**\n\n"
+    for i, bid in enumerate(bids, 1):
+        msg_id = bid.get("auction_id")
+        link = f"https://t.me/{AUCTION_CHANNEL_LINK}/{msg_id}"
+        text += f"{i}. 🆔 [{bid['item_id']}]({link}) | 💰 {bid['base_price']} PD\n"
+
+    await message.reply(text, disable_web_page_preview=True)
+
+
+
+user_bid_sessions = {}
+
+@bot.on_message(filters.text & filters.private, group=5)
+async def receive_bid_amount(client, message):
+    user_id = message.from_user.id
+
+    if user_id in user_bid_sessions:
+        try:
+            bid_amount = int(message.text)
+            item_id = user_bid_sessions[user_id]
+
+            # Auction fetch aur bid logic
+            auction = await approved_items_collection.find_one({"item_id": item_id})
+            if not auction:
+                return await message.reply("❌ Auction not found!")
+
+            current_bid = int(auction.get("base_price", 1000))
+            if bid_amount <= current_bid:
+                return await message.reply(f"⚠️ Your bid must be higher than {current_bid} PD!")
+
+            previous_bidder_name = auction.get("bidder")
+            previous_bidder_id = auction.get("bidder_id")  # Yeh line zaroori hai
+            item_name = auction.get("name", "Unknown Item")
+
+            # New bid update
+            await approved_items_collection.update_one(
+                {"item_id": item_id},
+                {"$set": {
+                    "base_price": bid_amount,
+                    "bidder": message.from_user.first_name,
+                    "bidder_id": user_id  # Ab naya bidder bhi save karega
+                }}
+            )
+
+            # Bid message update
+            bid_text = (
+                "┏━━━━━━━━━━━━━━━━\n"
+                f" 💵 Highest Bid ==> {bid_amount} PD\n"
+                f" 👤 By ==> [{message.from_user.first_name}](tg://user?id={user_id})\n"
+                "┗━━━━━━━━━━━━━━━━"
+            )
+
+            bid_command = f"/start {item_id}"
+            encoded_command = quote_plus(bid_command)
+
+            keyboard = InlineKeyboardMarkup([
+                [InlineKeyboardButton("📮 PLACE BID", url=f"https://t.me/God_auction_bot?start={item_id}")]
+            ])
+
+            try:
+                await client.edit_message_text(
+                    chat_id=AUCTION_CHANNEL_ID, message_id=auction["bid_msg_id"], text=bid_text, reply_markup=keyboard
+                )
+                await message.reply(f"✅ Your bid of {bid_amount} PD has been placed!")
+
+                # Agar previous bidder hai toh usko inform kar
+                if previous_bidder_id and previous_bidder_id != user_id:
+                    try:
+                        bid_again_text = (
+                            f"⚡ *Update on your Bid!*\n\n"
+                            f"Item: *{item_name}*\n"
+                            f"New Highest Bid: `{bid_amount}` PD\n\n"
+                            f"[Click here to Bid Again!](https://t.me/God_auction_bot?start={item_id})"
+                        )
+                        bid_again_button = InlineKeyboardMarkup([
+                            [InlineKeyboardButton("📮 PLACE BID", url=f"https://t.me/God_auction_bot?start={item_id}")]
+                        ])
+
+                        await client.send_message(
+                            chat_id=previous_bidder_id,
+                            text=bid_again_text,
+                            reply_markup=bid_again_button,
+                            parse_mode="Markdown"
+                        )
+                    except Exception as e:
+                        logging.error(f"⚠️ Error sending previous bidder notify: {e}")
+
+            except Exception as e:
+                logging.error(f"⚠️ Error updating bid message: {e}")
+                await message.reply("⚠️ Failed to update bid message!")
+
+            # Bid complete hone ke baad session delete kar dena
+            del user_bid_sessions[user_id]
+
+        except ValueError:
+            await message.reply("❌ Please send a valid number for bid amount!")
