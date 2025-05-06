@@ -215,14 +215,16 @@ async def profile_handler(client, message):
     user_id = message.from_user.id
     name = message.from_user.first_name
 
-    # Dummy user data with external image URL
+    # Permanent character image
+    char_image = "https://files.catbox.moe/b0co3e.jpg"  # Naruto image, ya jo tu chahe
+
+    # Dummy profile data
     user_data = {
         "level": 12,
         "coins": 18750,
         "gems": 40,
         "unlocked": ["Naruto", "Sasuke", "Ichigo"],
-        "equipped": "Naruto",
-        "char_image": "https://files.catbox.moe/lk4n3b.jpg"  # Yeh link user se set hoga future mein
+        "equipped": "Naruto"
     }
 
     caption = f"""**Shinobi Profile for {name}** 🔥
@@ -239,7 +241,7 @@ async def profile_handler(client, message):
     buttons = [[InlineKeyboardButton("Main Menu", callback_data="main_menu")]]
 
     await message.reply_photo(
-        photo=user_data["https://files.catbox.moe/b0co3e.jpg"],  # Yeh image link user ka hi hoga
+        photo=char_image,
         caption=caption,
         reply_markup=InlineKeyboardMarkup(buttons)
     )
