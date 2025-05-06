@@ -1,10 +1,10 @@
-from AB import bot 
+from bot import bot 
 from pyrogram import Client, filters 
 import sys 
 import os 
 import requests 
 import logging
-import AB 
+import bot 
 
 
 _DEV_ = 6239769036 
