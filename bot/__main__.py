@@ -32,7 +32,7 @@ async def start_game(client, message):
     conn.commit()
 
     keyboard = InlineKeyboardMarkup(
-        [[InlineKeyboardButton("▶️ Start Game", callback_data="start_game")]]
+        [[InlineKeyboardButton("Start Game", callback_data="start_game")]]
     )
 
     await message.reply_photo(
