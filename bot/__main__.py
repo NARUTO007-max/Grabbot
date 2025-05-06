@@ -13,7 +13,7 @@ from pyrogram import Client, filters
 from config import API_ID, API_HASH, BOT_TOKEN, AUCTION_GROUP_LINK, AUCTION_CHANNEL_ID, AUCTION_CHANNEL_LINK, COOLDOWN_TIME, OWNER_IDS, APPROVAL_GROUP_ID
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton, Message
 from pymongo import MongoClient
-from AB.db import (
+from bot.db import (
     users_collection,
     admins_collection,
     pending_submissions,
