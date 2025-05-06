@@ -210,24 +210,36 @@ async def final_character(client, callback_query):
         else:
             await callback_query.answer("Invalid character selected!")
 
+# Assuming you already saved user's selected character somewhere after "char_" selection
+# Example: user_selected_characters[user_id] = "naruto"
+user_profiles = {}
+user_selected_characters = {}  # This should be populated in your /start or char_ callback
+
 @bot.on_message(filters.command("profile") & filters.private)
 async def profile_handler(client, message):
     user_id = message.from_user.id
     name = message.from_user.first_name
 
-    # Static/permanent character image (you can change this link)
+    # If profile doesn't exist
+    if user_id not in user_profiles:
+        selected_char = user_selected_characters.get(user_id)
+        if not selected_char:
+            await message.reply("Pehle apna character choose karo bhai! Use /start.")
+            return
+        
+        user_profiles[user_id] = {
+            "level": 1,
+            "coins": 0,
+            "gems": 0,
+            "unlocked": [selected_char.capitalize()],
+            "equipped": selected_char.capitalize()
+        }
+
+    user_data = user_profiles[user_id]
+
+    # Fixed image (ya future me dynamic if needed)
     char_image = "https://files.catbox.moe/b0co3e.jpg"
 
-    # Dummy user profile data (future: replace with database)
-    user_data = {
-        "level": 12,
-        "coins": 18750,
-        "gems": 40,
-        "unlocked": ["Naruto", "Sasuke", "Ichigo"],
-        "equipped": "Naruto"
-    }
-
-    # Caption text
     caption = f"""**Shinobi Profile for {name}** 🔥
 
 **Level:** {user_data['level']}
@@ -239,10 +251,7 @@ async def profile_handler(client, message):
 {', '.join(user_data['unlocked'])}
 """
 
-    # Inline button to go to main menu
-    buttons = [
-        [InlineKeyboardButton("🏠 Main Menu", callback_data="main_menu")]
-    ]
+    buttons = [[InlineKeyboardButton("🏠 Main Menu", callback_data="main_menu")]]
 
     await message.reply_photo(
         photo=char_image,
