@@ -210,23 +210,24 @@ async def final_character(client, callback_query):
         else:
             await callback_query.answer("Invalid character selected!")
 
-# Assuming you already saved user's selected character somewhere after "char_" selection
-# Example: user_selected_characters[user_id] = "naruto"
 user_profiles = {}
-user_selected_characters = {}  # This should be populated in your /start or char_ callback
+user_selected_characters = {}
+
+# Fixed image
+char_image = "https://files.catbox.moe/b0co3e.jpg"
 
 @bot.on_message(filters.command("profile") & filters.private)
 async def profile_handler(client, message):
     user_id = message.from_user.id
     name = message.from_user.first_name
 
-    # If profile doesn't exist
+    # If profile doesn't exist, create one
     if user_id not in user_profiles:
         selected_char = user_selected_characters.get(user_id)
         if not selected_char:
-            await message.reply("Pehle apna character choose karo bhai! Use /start.")
+            await message.reply("You haven't chosen your character yet! Use /start to begin.")
             return
-        
+
         user_profiles[user_id] = {
             "level": 1,
             "coins": 0,
@@ -236,9 +237,6 @@ async def profile_handler(client, message):
         }
 
     user_data = user_profiles[user_id]
-
-    # Fixed image (ya future me dynamic if needed)
-    char_image = "https://files.catbox.moe/b0co3e.jpg"
 
     caption = f"""**Shinobi Profile for {name}** 🔥
 
@@ -252,19 +250,13 @@ async def profile_handler(client, message):
 """
 
     buttons = [[InlineKeyboardButton("🏠 Main Menu", callback_data="main_menu")]]
+    await message.reply_photo(photo=char_image, caption=caption, reply_markup=InlineKeyboardMarkup(buttons))
 
-    await message.reply_photo(
-        photo=char_image,
-        caption=caption,
-        reply_markup=InlineKeyboardMarkup(buttons)
-    )
 
-# Main Menu callback handler
 @bot.on_callback_query(filters.regex("main_menu"))
 async def main_menu_callback(client, callback_query):
     await callback_query.answer("Opening Main Menu...")
 
-    # Example Main Menu content
     await callback_query.message.edit_text(
         "**Welcome to the Main Menu!** Choose an option:",
         reply_markup=InlineKeyboardMarkup([
@@ -275,18 +267,17 @@ async def main_menu_callback(client, callback_query):
         ])
     )
 
-# (Optional) Go back to profile from Main Menu
+
 @bot.on_callback_query(filters.regex("profile_back"))
 async def profile_back(client, callback_query):
-    # Same content from /profile, re-used
+    user_id = callback_query.from_user.id
     name = callback_query.from_user.first_name
-    user_data = {
-        "level": 12,
-        "coins": 18750,
-        "gems": 40,
-        "unlocked": ["Naruto", "Sasuke", "Ichigo"],
-        "equipped": "Naruto"
-    }
+
+    if user_id not in user_profiles:
+        await callback_query.answer("No profile found. Use /start.")
+        return
+
+    user_data = user_profiles[user_id]
 
     caption = f"""**Shinobi Profile for {name}** 🔥
 
@@ -300,8 +291,7 @@ async def profile_back(client, callback_query):
 """
 
     await callback_query.message.edit_media(
-        media=char_image,
-        caption=caption,
+        media=InputMediaPhoto(media=char_image, caption=caption),
         reply_markup=InlineKeyboardMarkup([
             [InlineKeyboardButton("🏠 Main Menu", callback_data="main_menu")]
         ])
