@@ -979,3 +979,7 @@ async def accept_or_reject_user_id(client, callback_query):
         await bot.send_message(chat_id=user_id, text="❌YOUR POKEMON IS REJECTED FOR AUCTION") 
 
         await submissions_collection.delete_one({"user_id": user_id})
+
+if __name__=="__main__":
+    print("[BOT STARTED||💲💲💲]") 
+    bot.run()
