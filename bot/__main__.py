@@ -581,3 +581,401 @@ async def send_message_safe(client, chat_id, text, reply_markup=None):
         await client.send_message(chat_id, text, reply_markup=reply_markup)
     except Exception as e:
         logging.error(f"Failed to send message to {chat_id}: {e}")
+
+user_submission_steps = {}
+
+# **Add Submission Command**
+@bot.on_message(filters.command("add") & filters.private, group=5)
+async def add_submission(client, message):
+    if message.chat.type != ChatType.PRIVATE:
+        await message.reply_text("⚜️USE IN DM ONLY⚜️") 
+        return 
+
+    if not submission_active or not auction_active:
+        return await message.reply("❌ **Submissions are currently closed!**")
+
+    user_id = message.from_user.id
+    if user_id in user_cooldowns and time.time() - user_cooldowns[user_id] < COOLDOWN_TIME:
+        remaining_time = int(COOLDOWN_TIME - (time.time() - user_cooldowns[user_id]))
+        return await message.reply(f"⚠️ Wait {remaining_time} seconds before submitting again.")
+
+    user_cooldowns[user_id] = time.time()
+
+    # ✅ **MongoDB me Submission Save Karein**
+    await submissions_collection.update_one(
+                {"user_id": user_id}, 
+                {"$set": {
+                    "user_id": user_id,
+                    "step": "pokemon_name",
+                    "status": "pending",
+                }},
+                upsert=True
+            )
+
+    # ✅ **Inline Buttons with Cancel Option**
+    await message.reply_text(
+                "📌 **Choose Submission Type:**",
+                reply_markup=InlineKeyboardMarkup([
+                    [InlineKeyboardButton("⭐ Legendary", callback_data=f"submit_legendary_{user_id}")],
+                    [InlineKeyboardButton("🔹 Non-Legendary", callback_data=f"submit_nonlegendary_{user_id}")],
+                    [InlineKeyboardButton("✨ Shiny", callback_data=f"submit_shiny_{user_id}")],
+                    [InlineKeyboardButton("📻 TMs", callback_data=f"submit_tms_{user_id}")]
+                ])
+            )
+
+
+
+# **✅ Cancel Button Handler**
+@bot.on_callback_query(filters.command("cancle"), group=5)
+async def cancel_submission(client, callback_query):
+    user_id = callback_query.data.split("_")[1]
+
+    # ✅ **MongoDB se Submission Delete Karein**
+    await submissions_collection.delete_one({"user_id": user_id})
+
+    # ✅ **Notify User**
+    await callback_query.message.edit_text("✅ **Your submission has been cancelled!**")
+    await callback_query.answer("✅ Submission cancelled successfully!", show_alert=True)
+
+# **Handle Submission Type Selection**
+# **Handle Submission Type Selection**
+@bot.on_callback_query(filters.regex(r"submit_"))
+async def choose_submission_type(client, callback_query):
+    user_id = int(callback_query.data.split("_")[-1])
+    submission_type = callback_query.data.split("_")[1]
+
+    # Check if the selected submission type is TM
+    if submission_type == "tms":
+        user_submission_steps[user_id] = {"step": "tms_info", "type": submission_type}
+        await callback_query.message.edit_text("1️⃣ Send your **TMs page**:\nFrom @HeXamonbot")
+
+    else:
+        user_submission_steps[user_id] = {"step": "pokemon_name", "type": submission_type}
+        await callback_query.message.edit_text("1️⃣ Send your **Pokemon Name**:")
+
+
+@bot.on_message(filters.text | filters.forwarded | filters.photo, group=5)
+async def handle_submission_details(client, message):
+    user_id = message.from_user.id
+    if user_id not in user_submission_steps:
+        return  # 🛑 Agar user submission me nahi hai toh return kar dega
+
+    # ✅ Step ko initialize karo pehle
+    step = user_submission_steps[user_id]["step"]
+
+    if user_submission_steps[user_id]["type"] == "tms":
+
+        if step == "tms_info":
+            user_submission_steps[user_id]["tms_info"] = message.text
+            user_submission_steps[user_id]["step"] = "base_price"
+            await message.reply("SEND BASE PRICE OF TMs")
+
+        elif step == "base_price":
+             if not message.text.is_digit:
+                 return await message.reply("⚠️ Please give base price in numbers")
+
+
+        user_submission_steps[user_id]["base_price"] = int(message.text)
+
+        id = str(random.randint(300, 5000)) 
+        pokemon_id = "X" + id
+
+        # ✅ **Save Submission in MongoDB**
+        submission_data = {
+            "user_id": user_id,
+            "tms_info": user_submission_steps[user_id]["tms_info"],
+            "type": user_submission_steps[user_id]["type"],
+            "base_price": user_submission_steps[user_id]["base_price"],
+
+        }
+        await submissions_collection.update_one({"user_id": user_id}, {"$set": submission_data}, upsert=True)
+
+        await message.reply("✅ **Your Pokémon has been submitted for auction!**")
+
+        # 🚀 **Automatically Send to Auction Channel**
+        await send_submission_to_admins(client, message, user_id)
+
+# ✅ **Submission Complete, User Steps Delete Karo**
+        del user_submission_steps[user_id]  #
+
+
+    if step == "pokemon_name":
+        user_submission_steps[user_id]["name"] = message.text
+        user_submission_steps[user_id]["step"] = "info_page"
+        await message.reply("2️⃣ Forward Pokémon Info Page! from @HeXamonbot")
+
+    elif step == "info_page":
+        if not message.forward_date and not message.photo:
+            return await message.reply("⚠️ Please forward the Pokémon Info Page or send an image!")
+
+        if message.photo:
+            user_submission_steps[user_id]["image"] = await client.download_media(message.photo.file_id)
+
+        user_submission_steps[user_id]["info_page"] = message.caption or "No Info Available"
+        user_submission_steps[user_id]["step"] = "ivs_evs"
+        await message.reply("3️⃣ Forward Pokémon IVs/EVs Page! from @HeXamonbot")
+
+    elif step == "ivs_evs":
+        if not message.forward_date:
+            return await message.reply("⚠️ Please forward the IVs/EVs Page!")
+
+        user_submission_steps[user_id]["ivs_evs"] = message.caption or "Not Provided"
+        user_submission_steps[user_id]["step"] = "moveset"
+        await message.reply("4️⃣ Forward the Moveset. from @HeXamonbot")
+
+    elif step == "moveset":
+        if not message.forward_date:
+            return await message.reply("⚠️ Please forward the Moveset Page!")
+
+        user_submission_steps[user_id]["moveset"] = message.caption or "Not Provided"
+        user_submission_steps[user_id]["step"] = "boosted"
+        await message.reply("5️⃣ Is your Pokémon boosted? Type the boosted stat or 'None'.")
+
+    elif step == "boosted":
+        user_submission_steps[user_id]["boosted"] = message.text
+        user_submission_steps[user_id]["step"] = "base_price"
+        await message.reply("6️⃣ Enter Base Price in Pd.")
+
+    elif step == "base_price":
+        if not message.text.isdigit():
+            return await message.reply("⚠️ Please send only numbers!")
+
+        user_submission_steps[user_id]["base_price"] = int(message.text)
+
+        id = str(random.randint(300, 5000)) 
+        pokemon_id = "X" + id
+
+        # ✅ **Save Submission in MongoDB**
+        submission_data = {
+            "user_id": user_id,
+            "name": user_submission_steps[user_id]["name"],
+            "type": user_submission_steps[user_id]["type"],
+            "info_page": user_submission_steps[user_id]["info_page"],
+            "ivs_evs": user_submission_steps[user_id]["ivs_evs"],
+            "moveset": user_submission_steps[user_id]["moveset"],
+            "boosted": user_submission_steps[user_id]["boosted"],
+            "base_price": user_submission_steps[user_id]["base_price"],
+            "trainer": message.from_user.first_name,
+            "user_name": message.from_user.username, 
+            "image": user_submission_steps[user_id].get("image"), 
+            "item_id": pokemon_id
+        }
+        await submissions_collection.update_one({"user_id": user_id}, {"$set": submission_data}, upsert=True)
+
+        await message.reply("✅ **Your Pokémon has been submitted for auction!**")
+
+        # 🚀 **Automatically Send to Auction Channel**
+        await send_submission_to_admins(client, message, user_id)
+
+# ✅ **Submission Complete, User Steps Delete Karo**
+        del user_submission_steps[user_id]  # Yeh ensure karega ki submission process reset ho jaaye
+
+async def send_submission_to_admins(client, message, user_id):
+    """Send the Pokémon submission details to the auction channel."""
+
+
+    # Fetch the submission from MongoDB
+    submission = await submissions_collection.find_one({"user_id": user_id})
+    submission = await submissions_collection.find_one({"user_id": user_id})
+    submission_type = await submissions_collection.find_one({"user_id": user_id,
+                                                             "status": "pending",
+                                                             "type": None
+                                                            })
+
+    if not submission:
+        return await message.reply("⚠️ **Submission not found!**")
+
+    if submission_type == "tms":
+        final_text = f"""
+        {submission.get('tms_info', None)}
+
+        •> **User ID:** {user_id}  
+        •> **Boosted Stat:** {submission.get('boosted', 'None')}  
+        •> **Starting Price:** {submission.get('base_price', '0')} Pd  </blockquote>
+
+        """
+
+    # Construct the submission message
+
+    final_text = f"""
+
+{submission.get('info_page', 'No Info Available')}  
+
+`{submission.get('ivs_evs', 'Not Provided')}` 
+
+{submission.get('moveset', 'Not Provided')}  
+
+<blockquote>•>👤 **Trainer:** {submission.get('trainer', 'Unknown Trainer')}  
+•> **User ID:** {user_id}  
+•> **Pokémon Name:** {submission.get('name', 'Unknown Pokémon')}  
+•> **Boosted Stat:** {submission.get('boosted', 'None')}  
+•> **Starting Price:** {submission.get('base_price', '0')} Pd  </blockquote>
+
+💳 ITEM ID: {submission.get('item_id', "None")}
+"""
+
+    bid_text = "┏━━━━━━━━━━━━━━━━\n"
+    f" 💵 Highest Bid ==> {submission.get('base_price', 0)} PD\n"
+    f" 👤 By ==> ❌ NONE\n"
+    "┗━━━━━━━━━━━━━━━━"
+
+    keyboard = InlineKeyboardMarkup([
+        [InlineKeyboardButton("✅ACCEPT", callback_data=f"accept_{user_id}")],
+        [InlineKeyboardButton("❌REJECT", callback_data=f"reject_{user_id}")]
+    ])
+
+    # Send the submission message with image (if available)
+    photo = submission.get("image")
+    try:
+        if photo:
+            auction_msg = await client.send_photo(chat_id=6642049252, photo=photo, caption=final_text, parse_mode=ParseMode.HTML)
+        else:
+            auction_msg = await client.send_message(chat_id=6642049252, text=final_text)
+
+        bid_msg = await client.send_message(chat_id=6642049252, text=bid_text, reply_markup=keyboard)
+
+        # Store auction details in MongoDB
+
+
+        await message.reply("✅ **Your Pokémon has been sended for submission!**")
+
+    except Exception as error:
+        logging.error(f"⚠️ Error sending auction message: {error}")
+        await message.reply("⚠️ **Failed to list item in auction!**")
+# Replace with your actual group ID
+
+@bot.on_callback_query(filters.regex(r"^(accept|reject)_(\d+)$"))
+async def accept_or_reject_user_id(client, callback_query):
+    """Handle accept/reject callback queries for Pokémon submissions."""
+
+    acception_id = callback_query.from_user.id
+    action, user_id = callback_query.data.split("_")
+    user_id = int(user_id)
+
+
+    if acception_id != 6642049252:
+        return
+
+    # Fetch the submission from MongoDB
+    submission = await submissions_collection.find_one({"user_id": user_id})
+    submission_type = await submissions_collection.find_one({"user_id": user_id, 
+                                                             "type": None}) 
+
+    if not submission:
+        return await callback_query.answer("⚠️ Submission not found!", show_alert=True)
+
+    if submission_type == "tms":
+        final_text = f"""
+        {submission.get('tms_info', None)}
+
+        •> **User ID:** {user_id}  
+        •> **Boosted Stat:** {submission.get('boosted', 'None')}  
+        •> **Starting Price:** {submission.get('base_price', '0')} Pd  </blockquote>
+
+        """
+
+    auction_text = f"""
+>★ {submission.get('type', 'None')}
+
+{submission.get('info_page', 'No Info Available')}  
+
+`{submission.get('ivs_evs', 'Not Provided')}` 
+
+{submission.get('moveset', 'Not Provided')}  
+
+>•𝗦𝗘𝗟𝗟𝗘𝗥: {submission.get('trainer', 'Unknown Trainer')}/{submission.get('user_name', 'None')}  
+>•𝙐𝙎𝙀𝙍 𝙄𝘿: {user_id}  
+>•𝙋𝙊𝙆𝙀𝙈𝙊𝙉 𝙉𝘼𝙈𝙀: {submission.get('name', 'Unknown Pokémon')}
+>• 𝘽𝙊𝙊𝙎𝙏𝙀𝘿 𝙎𝙏𝘼𝙏𝙎: {submission.get('boosted', 'None')}  
+>• 𝙎𝙏𝘼𝙍𝙏𝙄𝙉𝙂 𝙋𝙍𝙄𝘾𝙀: {submission.get('base_price', '0')} Pd
+
+💳 𝗜𝗧𝗘𝗠 𝗜𝗗: {submission.get('item_id', "None")}
+"""
+
+
+    bid_text = "┏━━━━━━━━━━━━━━━━\n"
+    f" 💵 Highest Bid ==> {submission.get('base_price', 0)} PD\n"
+    f" 👤 By ==> ❌ NONE\n"
+    "┗━━━━━━━━━━━━━━━━"
+
+
+    item_id = str(submission.get("item_id", "None")) 
+    base_price = submission.get("base_price", 0) 
+
+    bid_command = f"/placebid {item_id} {base_price + 5000}"
+    encoded_command = quote_plus(bid_command)
+
+    keyboard = InlineKeyboardMarkup([
+        [InlineKeyboardButton("📮 PLACE BID", url=f"https://t.me/God_auction_bot?start={item_id}")]
+    ]) 
+
+    if action == "accept":
+        response_text = f"✅ **Submission for {submission.get('name', 'Pokémon')} has been accepted!**"
+        await callback_query.message.edit_text(response_text)
+
+        poke_photo = submission.get("image")
+
+        await bot.send_message(
+            chat_id=user_id,
+            text="✅ YOUR POKEMON IS ACCEPTED FOR AUCTION"
+    )
+
+        auc_id = await bot.send_photo(
+            chat_id=AUCTION_CHANNEL_ID,
+            photo=poke_photo,
+            caption=auction_text,
+            parse_mode=ParseMode.MARKDOWN
+    )
+
+        bid_id = await bot.send_message(
+            chat_id=AUCTION_CHANNEL_ID,
+            text=bid_text,
+            reply_markup=keyboard
+    )
+
+        auction_id = auc_id.id
+        bid_msg_id = bid_id.id
+
+        # ✅ Counters
+        total_shiny = 0
+        total_legendary = 0
+        total_non_legendary = 0
+        total_tms = 0
+        total_teams = 0
+
+    # ✅ Type check
+        if submission["type"] == "shiny":
+            total_shiny = 1
+        elif submission["type"] == "legendary":
+            total_legendary = 1
+        elif submission["type"] == "non-legendary":
+            total_non_legendary = 1
+
+        total_approved = total_shiny + total_legendary + total_non_legendary + total_tms + total_teams
+        approved_ratio = f"{(total_approved / (total_approved + 0)) * 100:.2f}%" if total_approved > 0 else "0%"
+
+        await approved_items_collection.insert_one({
+            "user_id": user_id,
+            "type": submission["type"],
+            "name": submission["name"],
+            "base_price": submission["base_price"],
+            "msg_id": callback_query.message.id,
+            "item_id": item_id,
+            "bid_msg_id": bid_msg_id,
+            "auction_id": auction_id,
+            "timestamp": datetime.utcnow(),
+            "total_shiny": total_shiny,
+            "total_legendary": total_legendary,
+            "total_non_legendary": total_non_legendary,
+            "total_tms": 0,
+            "total_teams": 0,
+            "approved_ratio": approved_ratio
+    })
+
+    elif action == "reject":
+        response_text = f"❌ **Submission for {submission.get('name', 'Pokémon')} has been rejected.**"
+        await callback_query.message.edit_text(response_text)
+
+        await bot.send_message(chat_id=user_id, text="❌YOUR POKEMON IS REJECTED FOR AUCTION") 
+
+        await submissions_collection.delete_one({"user_id": user_id})
