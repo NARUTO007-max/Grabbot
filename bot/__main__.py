@@ -210,10 +210,11 @@ async def final_character(client, callback_query):
         else:
             await callback_query.answer("Invalid character selected!")
 
+# User data storage
 user_profiles = {}
 user_selected_characters = {}
 
-# Fixed image
+# Character image (fixed for now)
 char_image = "https://files.catbox.moe/b0co3e.jpg"
 
 @bot.on_message(filters.command("profile") & filters.private)
@@ -221,13 +222,13 @@ async def profile_handler(client, message):
     user_id = message.from_user.id
     name = message.from_user.first_name
 
-    # If profile doesn't exist, create one
-    if user_id not in user_profiles:
-        selected_char = user_selected_characters.get(user_id)
-        if not selected_char:
-            await message.reply("You haven't chosen your character yet! Use /start to begin.")
-            return
+    selected_char = user_selected_characters.get(user_id)
 
+    if not selected_char:
+        await message.reply("You haven't chosen your character yet! Use /start to begin.")
+        return
+
+    if user_id not in user_profiles:
         user_profiles[user_id] = {
             "level": 1,
             "coins": 0,
@@ -273,9 +274,19 @@ async def profile_back(client, callback_query):
     user_id = callback_query.from_user.id
     name = callback_query.from_user.first_name
 
-    if user_id not in user_profiles:
-        await callback_query.answer("No profile found. Use /start.")
+    if user_id not in user_selected_characters:
+        await callback_query.answer("You haven't chosen your character yet! Use /start.")
         return
+
+    if user_id not in user_profiles:
+        selected_char = user_selected_characters[user_id]
+        user_profiles[user_id] = {
+            "level": 1,
+            "coins": 0,
+            "gems": 0,
+            "unlocked": [selected_char.capitalize()],
+            "equipped": selected_char.capitalize()
+        }
 
     user_data = user_profiles[user_id]
 
