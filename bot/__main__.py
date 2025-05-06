@@ -24,7 +24,7 @@ async def start_game(client, message):
     user = cursor.fetchone()
 
     if user:
-        await message.reply_text("**You already started the bot!**")
+        await message.reply_text("** 🌟 You already started the bot! 🌟**")
         return
 
     # New user: add to DB
