@@ -215,10 +215,62 @@ async def profile_handler(client, message):
     user_id = message.from_user.id
     name = message.from_user.first_name
 
-    # Permanent character image
-    char_image = "https://files.catbox.moe/b0co3e.jpg"  # Naruto image, ya jo tu chahe
+    # Static/permanent character image (you can change this link)
+    char_image = "https://files.catbox.moe/b0co3e.jpg"
 
-    # Dummy profile data
+    # Dummy user profile data (future: replace with database)
+    user_data = {
+        "level": 12,
+        "coins": 18750,
+        "gems": 40,
+        "unlocked": ["Naruto", "Sasuke", "Ichigo"],
+        "equipped": "Naruto"
+    }
+
+    # Caption text
+    caption = f"""**Shinobi Profile for {name}** 🔥
+
+**Level:** {user_data['level']}
+**Equipped:** {user_data['equipped']}
+**Coins:** {user_data['coins']} 🪙
+**Gems:** {user_data['gems']} 💎
+
+**Unlocked Fighters:**
+{', '.join(user_data['unlocked'])}
+"""
+
+    # Inline button to go to main menu
+    buttons = [
+        [InlineKeyboardButton("🏠 Main Menu", callback_data="main_menu")]
+    ]
+
+    await message.reply_photo(
+        photo=char_image,
+        caption=caption,
+        reply_markup=InlineKeyboardMarkup(buttons)
+    )
+
+# Main Menu callback handler
+@bot.on_callback_query(filters.regex("main_menu"))
+async def main_menu_callback(client, callback_query):
+    await callback_query.answer("Opening Main Menu...")
+
+    # Example Main Menu content
+    await callback_query.message.edit_text(
+        "**Welcome to the Main Menu!** Choose an option:",
+        reply_markup=InlineKeyboardMarkup([
+            [InlineKeyboardButton("🗺️ Explore", callback_data="explore")],
+            [InlineKeyboardButton("🛍️ Shop", callback_data="shop")],
+            [InlineKeyboardButton("⚔️ Inventory", callback_data="inventory")],
+            [InlineKeyboardButton("📜 Profile", callback_data="profile_back")]
+        ])
+    )
+
+# (Optional) Go back to profile from Main Menu
+@bot.on_callback_query(filters.regex("profile_back"))
+async def profile_back(client, callback_query):
+    # Same content from /profile, re-used
+    name = callback_query.from_user.first_name
     user_data = {
         "level": 12,
         "coins": 18750,
@@ -238,12 +290,12 @@ async def profile_handler(client, message):
 {', '.join(user_data['unlocked'])}
 """
 
-    buttons = [[InlineKeyboardButton("Main Menu", callback_data="main_menu")]]
-
-    await message.reply_photo(
-        photo=char_image,
+    await callback_query.message.edit_media(
+        media=char_image,
         caption=caption,
-        reply_markup=InlineKeyboardMarkup(buttons)
+        reply_markup=InlineKeyboardMarkup([
+            [InlineKeyboardButton("🏠 Main Menu", callback_data="main_menu")]
+        ])
     )
 
 print("Bot is running...")
