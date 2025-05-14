@@ -19,3 +19,9 @@ def get_or_create_user(user_id, username):
         }
         users.insert_one(user)
     return user
+
+def set_character(user_id, character_name):
+    users.update_one(
+        {"user_id": user_id},
+        {"$set": {"selected_character": character_name}}
+    )
