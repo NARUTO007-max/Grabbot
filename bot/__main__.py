@@ -86,7 +86,7 @@ async def help_handler(client, query: CallbackQuery):
             "Use the buttons below to return."
         ),
         reply_markup=InlineKeyboardMarkup([
-            [InlineKeyboardButton("🔙 Back", callback_data="refresh")]
+            [InlineKeyboardButton("🔙 Back", callback_data="baka")]
         ])
     )
     await query.answer("Help menu!")
