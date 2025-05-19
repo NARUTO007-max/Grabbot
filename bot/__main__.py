@@ -30,3 +30,7 @@ async def start_handler(client, message: Message):
              InlineKeyboardButton("🔁 REFRESH 🔁", callback_data="refresh")]
         ])
     )
+
+if __name__=="__main__":
+    print("[BOT STARTED||💲💲💲]") 
+    bot.run()
