@@ -38,7 +38,7 @@ async def start_handler(client, message: Message):
         ),
         reply_markup=InlineKeyboardMarkup([
             [InlineKeyboardButton("➕ ADD ME ➕", url="https://t.me/YourBotUsername?startgroup=true")],
-            [InlineKeyboardButton("⛩ NEWS CHANNEL ⛩", url="https://t.me/YourNewsChannel"),
+            [InlineKeyboardButton("🐉 Support group 🐉", url="https://t.me/animaction_world_in_2025"),
              InlineKeyboardButton("🍁 OWNER 🍁", url="https://t.me/Uzumaki_X_Naruto_6")],
             [InlineKeyboardButton("🛡️ HELP ⚡", callback_data="help"),
              InlineKeyboardButton("💲 REFRESH 💲", callback_data="refresh")]
