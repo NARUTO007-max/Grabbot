@@ -27,6 +27,22 @@ async def refresh_handler(client, query: CallbackQuery):
     )
     await query.answer("Refreshed!")
 
+@bot.on_callback_query(filters.regex("help"))
+async def help_handler(client, query: CallbackQuery):
+    await query.message.edit_caption(
+        caption=(
+            "🛡️ **Help Menu**\n\n"
+            "› Use me in groups to spawn random waifus.\n"
+            "› Members can grab waifus using claim commands.\n"
+            "› More features coming soon...\n\n"
+            "Use the buttons below to return."
+        ),
+        reply_markup=InlineKeyboardMarkup([
+            [InlineKeyboardButton("🔙 Back", callback_data="back")]
+        ])
+    )
+    await query.answer("Help opened!")
+
 if __name__ == "__main__":
     print("[BOT STARTED||💲💲💲]") 
     bot.run()
