@@ -126,6 +126,34 @@ async def my_waifus(client, message: Message):
     else:
         await message.reply(text)
 
+@bot.on_message(filters.command("fav"))
+async def fav_waifu_handler(client, message: Message):
+    if len(message.command) < 2:
+        return await message.reply("Usage: `/fav <waifu_id>`", quote=True)
+
+    try:
+        waifu_id = int(message.command[1])
+    except ValueError:
+        return await message.reply("Waifu ID must be a number.", quote=True)
+
+    user_id = message.from_user.id
+
+    # Check if waifu with given ID exists in user's list
+    user_data = waifu_col.find_one({"user_id": user_id})
+    if not user_data or "waifus" not in user_data:
+        return await message.reply("You don't have any waifus yet.", quote=True)
+
+    for waifu in user_data["waifus"]:
+        if waifu.get("id") == waifu_id:
+            # Set as favorite
+            waifu_col.update_one(
+                {"user_id": user_id},
+                {"$set": {"favorite_waifu_id": waifu_id}}
+            )
+            return await message.reply(f"✅ `{waifu_id}` set as your favorite waifu.", quote=True)
+
+    await message.reply("Waifu ID not found in your harem.", quote=True)
+
 # --- Start Bot ---
 if __name__ == "__main__":
     print("[BOT STARTED||💲💲💲]")
