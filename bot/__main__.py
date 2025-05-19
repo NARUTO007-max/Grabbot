@@ -10,7 +10,7 @@ bot = Client(
     bot_token="7982886378:AAEcf-VbY9bvj-4DFMLe4rMOQMlJpD8TfGY"
 )
 
-start_time = time.time()  # for uptime calculation
+start_time = time.time()  # for uptime
 
 def get_uptime():
     seconds = int(time.time() - start_time)
@@ -21,11 +21,12 @@ def get_uptime():
 @bot.on_message(filters.command("start"))
 async def start_handler(client, message: Message):
     start = time.time()
-    await message.chat.get_member(message.from_user.id)  # small operation to simulate ping
+    temp = await message.reply("Pinging...")
     ping = (time.time() - start) * 1000
+    await temp.delete()
 
     await message.reply_photo(
-        photo="https://files.catbox.moe/jejubs.jpg",  # Replace with DBZ image if you want
+        photo="https://files.catbox.moe/jejubs.jpg",  # Optional: Replace with DBZ-themed image
         caption=(
             "🌿 𝗚𝗥𝗘𝗘𝗧𝗜𝗡𝗚𝗦, 𝗜'𝗠 「ᴡᴀɪғᴜ ɢʀᴀʙʙᴇʀ ʙᴏᴛ」, 𝗡𝗜𝗖𝗘 𝗧𝗢 𝗠𝗘𝗘𝗧 𝗬𝗢𝗨!\n"
             "━━━━━━━━━━━━━━\n"
