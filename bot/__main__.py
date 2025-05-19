@@ -8,7 +8,7 @@ app = Client(
     "utag_bot",
     api_id=25698862,
     api_hash="7d7739b44f5f8c825d48cc6787889dbc",
-    bot_token="7608107574:AAH_PGTsl7ua9IY9C1GQOz5qdU8XjXATH80"
+    bot_token="7982886378:AAEcf-VbY9bvj-4DFMLe4rMOQMlJpD8TfGY"
 )
 
 # --- Admin Filter ---
