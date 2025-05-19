@@ -14,7 +14,7 @@ app = Client(
     "utag_bot",
     api_id=25698862,
     api_hash="7d7739b44f5f8c825d48cc6787889dbc",
-    bot_token="your_bot_token"
+    bot_token="7608107574:AAH_PGTsl7ua9IY9C1GQOz5qdU8XjXATH80"
 )
 
 spam_chats = []
