@@ -1,32 +1,13 @@
-import time
-from pyrogram import Client, filters
-from pyrogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton
+from pyrogram.types import CallbackQuery
 
-# --- Bot Initialization ---
-bot = Client(
-    "utag_bot",
-    api_id=25698862,
-    api_hash="7d7739b44f5f8c825d48cc6787889dbc",
-    bot_token="7982886378:AAEcf-VbY9bvj-4DFMLe4rMOQMlJpD8TfGY"
-)
-
-start_time = time.time()  # for uptime
-
-def get_uptime():
-    seconds = int(time.time() - start_time)
-    mins, secs = divmod(seconds, 60)
-    hours, mins = divmod(mins, 60)
-    return f"{hours}h:{mins}m:{secs}s"
-
-@bot.on_message(filters.command("start"))
-async def start_handler(client, message: Message):
+@bot.on_callback_query(filters.regex("refresh"))
+async def refresh_handler(client, query: CallbackQuery):
     start = time.time()
-    temp = await message.reply("Pinging...")
+    temp = await query.message.reply("Refreshing...")
     ping = (time.time() - start) * 1000
     await temp.delete()
 
-    await message.reply_photo(
-        photo="https://files.catbox.moe/jejubs.jpg",  # Optional: Replace with DBZ-themed image
+    await query.message.edit_caption(
         caption=(
             "🌿 𝗚𝗥𝗘𝗘𝗧𝗜𝗡𝗚𝗦, 𝗜'𝗠 「ᴡᴀɪғᴜ ɢʀᴀʙʙᴇʀ ʙᴏᴛ」, 𝗡𝗜𝗖𝗘 𝗧𝗢 𝗠𝗘𝗘𝗧 𝗬𝗢𝗨!\n"
             "━━━━━━━━━━━━━━\n"
@@ -44,6 +25,7 @@ async def start_handler(client, message: Message):
              InlineKeyboardButton("💲 REFRESH 💲", callback_data="refresh")]
         ])
     )
+    await query.answer("Refreshed!")
 
 if __name__ == "__main__":
     print("[BOT STARTED||💲💲💲]") 
