@@ -149,11 +149,11 @@ def circle(pfp, size=(500, 500)):
 
 
 def welcomepic(pic_path, user, chatname, user_id, uname):
-    background = Image.open("ANNIEMUSIC/assets/annie/AnnieNwel.png")
+    background = Image.open("bot/assets/annie/AnnieNwel.png")
     pfp = Image.open(pic_path).convert("RGBA")
     pfp = circle(pfp, size=(835, 839))
     draw = ImageDraw.Draw(background)
-    font_large = ImageFont.truetype('ANNIEMUSIC/assets/annie/ArialReg.ttf', size=65)
+    font_large = ImageFont.truetype('bot/assets/annie/ArialReg.ttf', size=65)
     draw.text((421, 715), f'{user}', fill=(242, 242, 242), font=font_large)
     draw.text((270, 1005), f'{user_id}', fill=(242, 242, 242), font=font_large)
     draw.text((570, 1308), f"{uname}", fill=(242, 242, 242), font=font_large)
@@ -226,7 +226,7 @@ async def greet_new_member(client, member: ChatMemberUpdated):
                     user.photo.big_file_id, file_name=f"downloads/pp{user.id}.png"
                 )
             else:
-                pic_path = "ANNIEMUSIC/assets/upic.png"
+                pic_path = "bot/assets/upic.png"
 
             previous_message = temp.MELCOW.get(f"welcome-{chat_id}")
             if previous_message:
@@ -265,7 +265,7 @@ async def greet_new_member(client, member: ChatMemberUpdated):
             )
             temp.MELCOW[f"welcome-{chat_id}"] = welcome_message
 
-            if pic_path and os.path.exists(pic_path) and "ANNIEMUSIC/assets/upic.png" not in pic_path:
+            if pic_path and os.path.exists(pic_path) and "bot/assets/upic.png" not in pic_path:
                 os.remove(pic_path)
             if welcome_img and os.path.exists(welcome_img):
                 os.remove(welcome_img)
