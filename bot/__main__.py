@@ -12,7 +12,7 @@ bot = Client(
 @bot.on_message(filters.command("start"))
 async def start_handler(client, message: Message):
     await message.reply_photo(
-        photo="https://i.imgur.com/S0P7UOE.jpg",  # Change to DBZ image if needed
+        photo="https://files.catbox.moe/jejubs.jpg",  # Change to DBZ image if needed
         caption=(
             "🌿 𝗚𝗥𝗘𝗘𝗧𝗜𝗡𝗚𝗦, 𝗜'𝗠 「ᴡᴀɪғᴜ ɢʀᴀʙʙᴇʀ ʙᴏᴛ」, 𝗡𝗜𝗖𝗘 𝗧𝗢 𝗠𝗘𝗘𝗧 𝗬𝗢𝗨!\n"
             "━━━━━━━━━━━━━━\n"
