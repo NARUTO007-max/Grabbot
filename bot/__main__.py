@@ -1,94 +1,92 @@
 # main.py
+import asyncio
+import random
 from pyrogram import Client, filters
-from pyrogram.types import (
-    Message,
-    InlineKeyboardMarkup,
-    InlineKeyboardButton,
-    CallbackQuery
-)
-from db import get_or_create_user, set_character
+from pyrogram.enums import ChatType, ChatMemberStatus
+from pyrogram.errors import UserNotParticipant
+from pyrogram.types import ChatPermissions
+from ANNIEMUSIC import app
+from ANNIEMUSIC.utils.jarvis_ban import admin_filter
+
 
 # Replace with your credentials
 app = Client(
-    "anime_multiverse_bot",
-    api_id=123456,
-    api_hash="your_api_hash",
+    "utag_bot",
+    api_id=25698862,
+    api_hash="7d7739b44f5f8c825d48cc6787889dbc",
     bot_token="your_bot_token"
 )
 
-# Character list (with image links)
-CHARACTERS = {
-    "Naruto": "https://i.imgur.com/DSQpNRF.jpg",
-    "Goku": "https://i.imgur.com/R0D6ZyT.jpg",
-    "Luffy": "https://i.imgur.com/V5t6N0v.jpg",
-    "Eren": "https://i.imgur.com/KikBl2H.jpg",
-    "Sung Jin-Woo": "https://i.imgur.com/MRgFzHt.jpg",
-    "Tanjiro": "https://i.imgur.com/O0mM4Nw.jpg",
-    "Saitama": "https://i.imgur.com/oqiEQkg.jpg",
-    "Asta": "https://i.imgur.com/h6e8grf.jpg"
-}
+spam_chats = []
 
-# /start command
-@app.on_message(filters.command("start"))
-async def start_game(client: Client, message: Message):
-    user = get_or_create_user(message.from_user.id, message.from_user.username)
+@app.on_message(filters.command(["utag", "all", "mention"]) & filters.group & admin_filter)
+async def tag_all_users(_,message): 
+    replied = message.reply_to_message  
+    if len(message.command) < 2 and not replied:
+        await message.reply_text("**ʀᴇᴘʟʏ ᴛᴏ ᴀ ᴍᴇssᴀɢᴇ ᴏʀ ɢɪᴠᴇ sᴏᴍᴇ ᴛᴇxᴛ ᴛᴏ ᴛᴀɢ ᴀʟʟ**") 
+        return                  
+    if replied:
+        spam_chats.append(message.chat.id)      
+        usernum= 0
+        usertxt = ""
+        async for m in app.get_chat_members(message.chat.id): 
+            if message.chat.id not in spam_chats:
+                break       
+            usernum += 5
+            usertxt += f"\n⊚ [{m.user.first_name}](tg://user?id={m.user.id})\n"
+            if usernum == 1:
+                await replied.reply_text(usertxt)
+                await asyncio.sleep(3)
+                usernum = 0
+                usertxt = ""
+        try :
+            spam_chats.remove(message.chat.id)
+        except Exception:
+            pass
+    else:
+        text = message.text.split(None, 1)[1]
 
-    image_url = "https://i.imgur.com/1kPvBqH.jpg"  # multiverse image
-    caption = (
-        "**Welcome to Anime Multiverse Battles!**\n\n"
-        "Travel through anime universes, choose your hero, "
-        "and fight epic villains in turn-based battles.\n\n"
-        "_Are you ready to begin your journey?_"
-    )
+        spam_chats.append(message.chat.id)
+        usernum= 0
+        usertxt = ""
+        async for m in app.get_chat_members(message.chat.id):       
+            if message.chat.id not in spam_chats:
+                break 
+            usernum += 1
+            usertxt += f"\n⊚ [{m.user.first_name}](tg://user?id={m.user.id})\n"
+            if usernum == 5:
+                await app.send_message(message.chat.id,f'{text}\n{usertxt}')
+                await asyncio.sleep(3)
+                usernum = 0
+                usertxt = ""                          
+        try :
+            spam_chats.remove(message.chat.id)
+        except Exception:
+            pass        
 
-    keyboard = InlineKeyboardMarkup([
-        [InlineKeyboardButton("🌍 Begin Adventure", callback_data="begin_adventure")]
-    ])
-
-    await message.reply_photo(photo=image_url, caption=caption, reply_markup=keyboard)
-
-# Begin Adventure → Show characters
-@app.on_callback_query(filters.regex("begin_adventure"))
-async def begin_adventure(client: Client, query: CallbackQuery):
-    await show_character_selection(client, query.message, query.from_user.id)
-
-# Show one character at a time
-async def show_character_selection(client, message, user_id, index=0):
-    characters = list(CHARACTERS.items())
-    name, image = characters[index]
-
-    buttons = [
-        [
-            InlineKeyboardButton("✅ Select", callback_data=f"select_{name}"),
-        ]
-    ]
-
-    if index > 0:
-        buttons[0].insert(0, InlineKeyboardButton("⬅️", callback_data=f"char_{index - 1}"))
-    if index < len(characters) - 1:
-        buttons[0].append(InlineKeyboardButton("➡️", callback_data=f"char_{index + 1}"))
-
-    await message.edit_media(
-        media=image,
-        caption=f"**{name}**\n\nClick ✅ to choose this hero.",
-        reply_markup=InlineKeyboardMarkup(buttons)
-    )
-
-# Handle character navigation
-@app.on_callback_query(filters.regex(r"char_(\d+)"))
-async def paginate_characters(client: Client, query: CallbackQuery):
-    index = int(query.matches[0].group(1))
-    await show_character_selection(client, query.message, query.from_user.id, index)
-
-# Handle character selection
-@app.on_callback_query(filters.regex(r"select_(.+)"))
-async def character_selected(client: Client, query: CallbackQuery):
-    character = query.matches[0].group(1)
-    set_character(query.from_user.id, character)
-
-    await query.message.edit_caption(
-        f"✅ You selected **{character}**!\n\nUse /travel to explore universes and start battling!"
-    )
+@app.on_message(filters.command(["cancel", "ustop"]))
+async def cancel_spam(client, message):
+    if not message.chat.id in spam_chats:
+        return await message.reply("𝐂𝐮𝐫𝐫𝐞𝐧𝐭𝐥𝐲 𝐈'𝐦 𝐍𝐨𝐭 ..")
+    is_admin = False
+    try:
+        participant = await client.get_chat_member(message.chat.id, message.from_user.id)
+    except UserNotParticipant:
+        is_admin = False
+    else:
+        if participant.status in (
+            ChatMemberStatus.ADMINISTRATOR,
+            ChatMemberStatus.OWNER
+        ):
+            is_admin = True
+    if not is_admin:
+        return await message.reply("𝐘𝐨𝐮 𝐀𝐫𝐞 𝐍𝐨𝐭 𝐀𝐝𝐦𝐢𝐧 𝐁𝐚𝐛𝐲")
+    else:
+        try:
+            spam_chats.remove(message.chat.id)
+        except:
+            pass
+        return await message.reply("**🦋ᴛᴀɢ ʀᴏᴋɴᴇ ᴡᴀʟᴇ ᴋɪ ᴍᴀᴀ ᴋᴀ ʙʜᴀʀᴏsᴀ Naruto.....🫠**")
 
 # Start the bot
 app.run()
