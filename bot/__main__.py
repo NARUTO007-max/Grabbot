@@ -1,4 +1,7 @@
 from pyrogram import Client, filters
+from pyrogram.types import Message
+from bot.db import waifu_col
+from pyrogram import Client, filters
 from pyrogram.types import Message, CallbackQuery, InlineKeyboardMarkup, InlineKeyboardButton
 import time
 
@@ -90,6 +93,38 @@ async def help_handler(client, query: CallbackQuery):
         ])
     )
     await query.answer("Help menu!")
+
+@bot.on_message(filters.command("mywaifus"))
+async def my_waifus(client, message: Message):
+    user_id = message.from_user.id
+    user_name = message.from_user.first_name
+    user = waifu_col.find_one({"user_id": user_id})
+
+    if not user or not user.get("waifus"):
+        await message.reply("You haven't claimed any waifus yet!")
+        return
+
+    waifus = user["waifus"]
+    last_image = waifus[-1].get("image", None)
+    
+    anime_groups = {}
+    for w in waifus:
+        anime_groups.setdefault(w["anime"], []).append(w)
+
+    text = f"**{user.get('username', user_name)}'s Harem - Page 1/1**\n\n"
+    for anime, wlist in anime_groups.items():
+        text += f"⌬ {anime} 〔{len(wlist)}〕\n"
+        for w in wlist:
+            text += f"◈⌠{w['rarity']}⌡ {w['id']} {w['name']} (x{w['count']})\n"
+        text += "\n"
+
+    if last_image:
+        await message.reply_photo(
+            photo=last_image,
+            caption=text
+        )
+    else:
+        await message.reply(text)
 
 # --- Start Bot ---
 if __name__ == "__main__":
