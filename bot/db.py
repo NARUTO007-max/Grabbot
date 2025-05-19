@@ -1,7 +1,7 @@
 from pymongo import MongoClient
 import os
 
-MONGO_URI = os.environ.get("mongodb+srv://sufyan532011:2010@dbz.28ftn.mongodb.net/?retryWrites=true&w=majority&appName=DBZ", "your-mongodb-uri")
+MONGO_URI = os.environ.get("MONGO_URI", "mongodb+srv://sufyan532011:2010@dbz.28ftn.mongodb.net/?retryWrites=true&w=majority&appName=DBZ")  # Environment variable name
 client = MongoClient(MONGO_URI)
 
 db = client["waifu_bot"]
@@ -16,3 +16,4 @@ def add_waifu_to_user(user_id, username, waifu_data):
         },
         upsert=True
     )
+
