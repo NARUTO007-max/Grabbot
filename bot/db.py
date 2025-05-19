@@ -1,7 +1,7 @@
 from pymongo import MongoClient
 import os
 
-MONGO_URI = os.environ.get("MONGO_URI", "your-mongodb-uri")
+MONGO_URI = os.environ.get("mongodb+srv://sufyan532011:2010@dbz.28ftn.mongodb.net/?retryWrites=true&w=majority&appName=DBZ", "your-mongodb-uri")
 client = MongoClient(MONGO_URI)
 
 db = client["waifu_bot"]
