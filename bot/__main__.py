@@ -223,50 +223,71 @@ async def upload_waifu(client, message: Message):
         await message.reply(f"❌ Failed to upload waifu.\nError: `{str(e)}`")# In-memory store for last waifu drop per chat
 last_waifu_drop = {}  # {chat_id: {"waifu": {...}, "time": timestamp, "grabbed": False}}
 
-@bot.on_message(filters.command("grab"))
-async def grab_waifu(client, message: Message):
-    chat_id = message.chat.id
+@bot.on_message(filters.command("grab") & filters.group)
+async def grab_waifu(_, message):
     user_id = message.from_user.id
-    username = message.from_user.mention()
+    group_id = message.chat.id
 
-    if chat_id not in last_waifu_drop or last_waifu_drop[chat_id]["grabbed"]:
-        return await message.reply("❌ No waifu available to grab!")
+    current_waifu = waifu_drops.get(group_id)
+    if not current_waifu:
+        return await message.reply("No waifu is currently available to grab.")
 
-    waifu = last_waifu_drop[chat_id]["waifu"]
-    drop_time = last_waifu_drop[chat_id]["time"]
-    taken_time = time.time() - drop_time
+    # Check if already grabbed
+    if current_waifu.get("grabbed_by"):
+        return await message.reply("This waifu has already been grabbed.")
 
-    # Mark as grabbed
-    last_waifu_drop[chat_id]["grabbed"] = True
+    # Set the waifu as grabbed
+    current_waifu["grabbed_by"] = user_id
+    waifu_drops[group_id] = current_waifu
 
-    # Add to user DB
-    waifu_data = {
-        "waifu_id": waifu["_id"],
-        "name": waifu["name"],
-        "rarity": waifu["rarity"],
-        "source": waifu["source"],
-        "image": waifu["image"],
+    # Save to DB
+    waifu_doc = {
+        "user_id": user_id,
+        "waifu_id": current_waifu["id"],
+        "name": current_waifu["name"],
+        "rarity": current_waifu["rarity"],
+        "image": current_waifu["image"],
         "count": 1,
-        "emoji": waifu["emoji"],
-        "fav": False,
-        "timestamp": time.time()
+        "anime": current_waifu.get("anime", "Unknown")
     }
-    add_waifu_to_user(user_id, username, waifu_data)
 
-    mins, secs = divmod(int(taken_time), 60)
-    await message.reply_photo(
-        photo=waifu["image"],
-        caption=(
-            f"✅ {username}, you got a new waifu!\n\n"
-            f"🌸 𝗡𝗔𝗠𝗘: {waifu['name']}\n"
-            f"{waifu['emoji']} 𝗥𝗔𝗥𝗜𝗧𝗬: {waifu['rarity']}\n"
-            f"❇️ 𝗦𝗢𝗨𝗥𝗖𝗘: {waifu['source']}\n\n"
-            f"⌛️ 𝗧𝗜𝗠𝗘 𝗧𝗔𝗞𝗘𝗡: {mins}m:{secs}s"
-        ),
-        reply_markup=InlineKeyboardMarkup(
-            [[InlineKeyboardButton("💗 My Waifu", callback_data="mywaifu")]]
+    existing = await waifu_collection.find_one({
+        "user_id": user_id,
+        "waifu_id": current_waifu["id"]
+    })
+
+    if existing:
+        await waifu_collection.update_one(
+            {"_id": existing["_id"]},
+            {"$inc": {"count": 1}}
         )
+    else:
+        await waifu_collection.insert_one(waifu_doc)
+
+    # Format rarity with emoji
+    emoji = {
+        "Common": "⚪️",
+            "Uncommon": "🟢",
+            "Rare": "🔵",
+            "Epic": "🟣",
+            "Legendary": "🟡",
+            "Mythical": "🟠",
+            "Limited": "🔮"
+    }.get(current_waifu["rarity"], "❔")
+
+    text = (
+        f"**{emoji} Grab Success!**\n\n"
+        f"**Name:** {current_waifu['name']}\n"
+        f"**Rarity:** {current_waifu['rarity']}\n"
+        f"**Anime:** {current_waifu.get('anime', 'Unknown')}\n"
+        f"**Waifu ID:** `{current_waifu['id']}`\n"
     )
+
+    buttons = [
+        [InlineKeyboardButton("My Waifus", callback_data="mywaifus")]
+    ]
+
+    await message.reply_photo(current_waifu["image"], caption=text, reply_markup=InlineKeyboardMarkup(buttons))
 
 @bot.on_message(filters.command("fdrop") & filters.user(7576729648))
 async def fdrop_handler(client, message):
