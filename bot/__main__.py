@@ -162,7 +162,7 @@ async def fav_waifu_handler(client, message: Message):
 
 drop_time_settings = {}  # Use MongoDB in production
 
-@bot.on_message(filters.command("changetime") & filters.user(OWNER_ID))
+@bot.on_message(filters.command("changetime") & filters.user(7576729648))
 async def change_time_handler(client, message):
     try:
         time_arg = message.text.split()[1]
