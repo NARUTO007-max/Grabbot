@@ -215,7 +215,7 @@ async def upload_waifu(client, message: Message):
         )
 
     except Exception as e:
-        await message.reply(f"❌ Failed to upload waifu.\nError: `{str(e)}`")re# In-memory store for last waifu drop per chat
+        await message.reply(f"❌ Failed to upload waifu.\nError: `{str(e)}`")# In-memory store for last waifu drop per chat
 last_waifu_drop = {}  # {chat_id: {"waifu": {...}, "time": timestamp, "grabbed": False}}
 
 @bot.on_message(filters.command("grab"))
