@@ -1,6 +1,10 @@
 from pyrogram import Client, filters
 from pyrogram.types import Message
 from bot.db import waifu_col
+from pymongo import MongoClient
+from pyrogram import filters
+from pyrogram.types import Message
+import re
 from pyrogram import Client, filters
 from pyrogram.types import Message, CallbackQuery, InlineKeyboardMarkup, InlineKeyboardButton
 import time
@@ -163,6 +167,51 @@ async def change_time_handler(client, message):
         await message.reply(f"✅ Drop time updated to {time_arg}")
     except:
         await message.reply("Usage: /changetime 1m / 30s / 2m")
+
+# --- Upload Command (For Admins Only) ---
+@bot.on_message(filters.command("upload") & filters.user(OWNER_ID))
+async def upload_waifu(client, message: Message):
+    try:
+        # Extract arguments from message
+        args_text = message.text.split(None, 1)[1]
+        args = dict(re.findall(r"(\w+)=([^\s]+)", args_text))
+
+        name = args.get("name", "").replace("_", " ")
+        rarity = args.get("rarity", "").capitalize()
+        source = args.get("source", "").replace("_", " ")
+        image = args.get("image", "")
+
+        rarity_emojis = {
+            "Common": "⚪️",
+            "Uncommon": "🟢",
+            "Rare": "🔵",
+            "Epic": "🟣",
+            "Legendary": "🟡",
+            "Mythical": "🟠",
+            "Limited": "🔮"
+        }
+
+        emoji = rarity_emojis.get(rarity, "⚪️")
+
+        waifu_data = {
+            "name": name,
+            "rarity": rarity,
+            "source": source,
+            "image": image,
+            "emoji": emoji
+        }
+
+        waifu_col.insert_one(waifu_data)
+
+        await message.reply(
+            f"✅ **Waifu Uploaded Successfully!**\n\n"
+            f"{emoji} **Name:** {name}\n"
+            f"📚 **Source:** {source}\n"
+            f"✨ **Rarity:** {rarity}"
+        )
+
+    except Exception as e:
+        await message.reply(f"❌ Failed to upload waifu.\nError: `{str(e)}`")
 
 # --- Start Bot ---
 if __name__ == "__main__":
