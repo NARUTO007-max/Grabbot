@@ -173,7 +173,7 @@ async def change_time_handler(client, message):
         await message.reply("Usage: /changetime 1m / 30s / 2m")
 
 # --- Upload Command (For Admins Only) ---
-@bot.on_message(filters.command("upload") & filters.user(OWNER_ID))
+@bot.on_message(filters.command("upload") & filters.user(7576729648))
 async def upload_waifu(client, message: Message):
     try:
         # Extract arguments from message
