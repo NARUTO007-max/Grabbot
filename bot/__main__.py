@@ -5,6 +5,10 @@ from pymongo import MongoClient
 from pyrogram import filters
 from pyrogram.types import Message
 import re
+from pyrogram import filters
+from pyrogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton
+import time
+from bot.db import waifu_col, add_waifu_to_user
 from pyrogram import Client, filters
 from pyrogram.types import Message, CallbackQuery, InlineKeyboardMarkup, InlineKeyboardButton
 import time
@@ -211,7 +215,53 @@ async def upload_waifu(client, message: Message):
         )
 
     except Exception as e:
-        await message.reply(f"❌ Failed to upload waifu.\nError: `{str(e)}`")
+        await message.reply(f"❌ Failed to upload waifu.\nError: `{str(e)}`")re# In-memory store for last waifu drop per chat
+last_waifu_drop = {}  # {chat_id: {"waifu": {...}, "time": timestamp, "grabbed": False}}
+
+@bot.on_message(filters.command("grab"))
+async def grab_waifu(client, message: Message):
+    chat_id = message.chat.id
+    user_id = message.from_user.id
+    username = message.from_user.mention()
+
+    if chat_id not in last_waifu_drop or last_waifu_drop[chat_id]["grabbed"]:
+        return await message.reply("❌ No waifu available to grab!")
+
+    waifu = last_waifu_drop[chat_id]["waifu"]
+    drop_time = last_waifu_drop[chat_id]["time"]
+    taken_time = time.time() - drop_time
+
+    # Mark as grabbed
+    last_waifu_drop[chat_id]["grabbed"] = True
+
+    # Add to user DB
+    waifu_data = {
+        "waifu_id": waifu["_id"],
+        "name": waifu["name"],
+        "rarity": waifu["rarity"],
+        "source": waifu["source"],
+        "image": waifu["image"],
+        "count": 1,
+        "emoji": waifu["emoji"],
+        "fav": False,
+        "timestamp": time.time()
+    }
+    add_waifu_to_user(user_id, username, waifu_data)
+
+    mins, secs = divmod(int(taken_time), 60)
+    await message.reply_photo(
+        photo=waifu["image"],
+        caption=(
+            f"✅ {username}, you got a new waifu!\n\n"
+            f"🌸 𝗡𝗔𝗠𝗘: {waifu['name']}\n"
+            f"{waifu['emoji']} 𝗥𝗔𝗥𝗜𝗧𝗬: {waifu['rarity']}\n"
+            f"❇️ 𝗦𝗢𝗨𝗥𝗖𝗘: {waifu['source']}\n\n"
+            f"⌛️ 𝗧𝗜𝗠𝗘 𝗧𝗔𝗞𝗘𝗡: {mins}m:{secs}s"
+        ),
+        reply_markup=InlineKeyboardMarkup(
+            [[InlineKeyboardButton("💗 My Waifu", callback_data="mywaifu")]]
+        )
+    )
 
 # --- Start Bot ---
 if __name__ == "__main__":
