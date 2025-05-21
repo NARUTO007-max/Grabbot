@@ -8,6 +8,11 @@ import re
 from pyrogram import filters
 from pyrogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton
 import time
+from pyrogram import filters
+from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+from random import choice
+from bot.db import waifu_col, get_all_groups
+from config import OWNER_ID  # You define your owner ID here
 from bot.db import waifu_col, add_waifu_to_user
 from pyrogram import Client, filters
 from pyrogram.types import Message, CallbackQuery, InlineKeyboardMarkup, InlineKeyboardButton
@@ -262,6 +267,32 @@ async def grab_waifu(client, message: Message):
             [[InlineKeyboardButton("💗 My Waifu", callback_data="mywaifu")]]
         )
     )
+
+@bot.on_message(filters.command("fdrop") & filters.user(7576729648))
+async def fdrop_handler(client, message):
+    waifu_list = list(waifu_col.aggregate([{"$unwind": "$waifus"}, {"$replaceRoot": {"newRoot": "$waifus"}}]))
+    if not waifu_list:
+        return await message.reply("❌ No waifus in database.")
+
+    waifu = choice(waifu_list)
+    caption = (
+        f"🔴 ᴀ waifu ʜᴀs ᴀᴘᴘᴇᴀʀᴇᴅ!\n"
+        f"ᴀᴅᴅ ʜɪᴍ ᴛᴏ ʏᴏᴜʀ ʜᴀʀᴇᴍ ʙʏ sᴇɴᴅɪɴɢ:\n"
+        f"/grab {waifu['name']}"
+    )
+
+    groups = get_all_groups()
+    for group_id in groups:
+        try:
+            await client.send_photo(
+                group_id,
+                photo=waifu["image"],
+                caption=caption
+            )
+        except Exception as e:
+            print(f"Failed to send to {group_id}: {e}")
+
+    await message.reply("✅ Waifu dropped in all groups!")
 
 # --- Start Bot ---
 if __name__ == "__main__":
