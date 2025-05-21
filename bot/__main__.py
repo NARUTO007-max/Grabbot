@@ -152,6 +152,18 @@ async def fav_waifu_handler(client, message: Message):
 
     await message.reply("Waifu ID not found in your harem.", quote=True)
 
+drop_time_settings = {}  # Use MongoDB in production
+
+@bot.on_message(filters.command("changetime") & filters.user(OWNER_ID))
+async def change_time_handler(client, message):
+    try:
+        time_arg = message.text.split()[1]
+        drop_time_settings["time"] = time_arg
+        # MongoDB: store per-group time config
+        await message.reply(f"✅ Drop time updated to {time_arg}")
+    except:
+        await message.reply("Usage: /changetime 1m / 30s / 2m")
+
 # --- Start Bot ---
 if __name__ == "__main__":
     print("[BOT STARTED||💲💲💲]")
