@@ -126,7 +126,7 @@ async def my_waifus(client, message: Message):
     else:
         await message.reply(text)
 
-@Client.on_message(filters.command("fav"))
+@bot.on_message(filters.command("fav"))
 async def fav_waifu_handler(client, message: Message):
     if len(message.command) < 2:
         return await message.reply("Usage: `/fav <waifu_id>`", quote=True)
