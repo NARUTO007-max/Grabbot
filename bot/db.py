@@ -1,5 +1,6 @@
 from pymongo import MongoClient
 import os
+from random import randint
 
 MONGO_URI = os.environ.get(
     "MONGO_URI",
@@ -11,7 +12,8 @@ db = client["waifu_bot"]
 
 waifu_col = db["waifus"]
 upload_col = db["upload_waifus"]
-config_col = db["bot_config"]  # for drop time
+config_col = db["bot_config"]  # For drop time and config
+group_col = db["groups"]       # For storing group IDs
 
 # --- User Functions ---
 
@@ -50,7 +52,6 @@ def get_random_waifu():
     count = upload_col.count_documents({})
     if count == 0:
         return None
-    from random import randint
     skip = randint(0, count - 1)
     return upload_col.find().skip(skip).limit(1)[0]
 
@@ -62,3 +63,11 @@ def set_drop_time(seconds: int):
 def get_drop_time():
     config = config_col.find_one({"_id": "drop_config"})
     return config.get("drop_time", 60) if config else 60
+
+# --- Group Management for /fdrop ---
+
+def add_group(chat_id):
+    group_col.update_one({"chat_id": chat_id}, {"$set": {"chat_id": chat_id}}, upsert=True)
+
+def get_all_groups():
+    return [group["chat_id"] for group in group_col.find()]
