@@ -1,91 +1,79 @@
-import random
-import smtplib
 from pyrogram import Client, filters
 from pyrogram.types import Message
-from email.mime.text import MIMEText
+from bot.db import setup_db, add_quiz, get_random_quiz
+import asyncio
+import json
+import random
 
-API_ID = "YOUR_API_ID"
-API_HASH = "YOUR_API_HASH"
-BOT_TOKEN = "YOUR_BOT_TOKEN"
+API_ID = 123456    # Replace with your API ID
+API_HASH = "your_api_hash"
+BOT_TOKEN = "your_bot_token"
+OWNER_ID = 123456789  # Replace with your Telegram ID
 
-bot = Client(
-    "email_bot",
-    api_id=21218274,
-    api_hash="3474a18b61897c672d315fb330edb213",
-    bot_token="8075971963:AAGeCnryaDaYoBcvfXHniFJZiN-_LhikXa0"
-)
+app = Client("anime_quiz_bot", api_id=API_ID, api_hash=API_HASH, bot_token=BOT_TOKEN)
 
-# Temporary in-memory storage
-user_data = {}
-otp_data = {}
+GROUP_ID = -1001234567890  # Replace with your group ID
 
-SENDER_EMAIL = "shekhikrar026@gmail.com"
-SENDER_PASSWORD = "ikkuikku1212"
+setup_db()
 
-# START command
-@bot.on_message(filters.command("start"))
+# /start command
+@app.on_message(filters.command("start"))
 async def start(client, message: Message):
-    await message.reply_photo(
-        photo="https://files.catbox.moe/5wfse2.jpg",
-        caption="Welcome to the Email Bot! Use /email to start."
+    await message.reply("Welcome to the Anime Quiz Bot! Random anime quizzes will be dropped in the group. Use /fdrop to force drop a quiz.")
+
+# /upload command (owner only)
+@app.on_message(filters.command("upload") & filters.private)
+async def upload_quiz(client, message: Message):
+    if message.from_user.id != OWNER_ID:
+        return await message.reply("You are not authorized.")
+
+    try:
+        parts = message.text.split("\n")
+        question = parts[1].strip()
+        options = [parts[2], parts[3], parts[4], parts[5]]
+        correct = int(parts[6])
+        add_quiz(question, options, correct)
+        await message.reply("Quiz uploaded successfully.")
+    except:
+        await message.reply("Format:\n/upload\nQuestion\nOption1\nOption2\nOption3\nOption4\nCorrectIndex (0-3)")
+
+# /fdrop command
+@app.on_message(filters.command("fdrop") & filters.group)
+async def force_drop(client, message: Message):
+    quiz = get_random_quiz()
+    if not quiz:
+        return await message.reply("No quiz found.")
+    await message.chat.send_poll(
+        question=quiz["question"],
+        options=quiz["options"],
+        type="quiz",
+        correct_option_id=quiz["correct_option"],
+        is_anonymous=False
     )
 
-# /email command
-@bot.on_message(filters.command("email"))
-async def email_step_1(client, message: Message):
-    user_id = message.from_user.id
-    user_data[user_id] = {}
-    await message.reply("Please enter your email address:")
+# Auto drop every random interval
+async def auto_drop():
+    await app.wait_until_ready()
+    while True:
+        await asyncio.sleep(random.randint(300, 600))  # Drop every 5 to 10 minutes
+        quiz = get_random_quiz()
+        if quiz:
+            try:
+                await app.send_poll(
+                    GROUP_ID,
+                    question=quiz["question"],
+                    options=quiz["options"],
+                    type="quiz",
+                    correct_option_id=quiz["correct_option"],
+                    is_anonymous=False
+                )
+            except Exception as e:
+                print("Failed to send poll:", e)
 
-    @bot.on_message(filters.private & filters.user(user_id))
-    async def get_email(client, msg):
-        if "email" not in user_data[user_id]:
-            user_data[user_id]["email"] = msg.text
-            otp = str(random.randint(100000, 999999))
-            otp_data[user_id] = otp
-            send_otp_email(msg.text, otp)
-            await msg.reply("An OTP has been sent to your email. Please enter it:")
+# Start auto drop loop
+@app.on_message(filters.command("start") & filters.user(OWNER_ID))
+async def start_auto_drop(client, message: Message):
+    await message.reply("Auto quiz drop started.")
+    app.loop.create_task(auto_drop())
 
-        elif "otp_verified" not in user_data[user_id]:
-            if msg.text == otp_data.get(user_id):
-                user_data[user_id]["otp_verified"] = True
-                await msg.reply("OTP verified! Now send the message you want to email:")
-            else:
-                await msg.reply("Invalid OTP. Try again:")
-
-        elif "message" not in user_data[user_id]:
-            user_data[user_id]["message"] = msg.text
-            await msg.reply("Enter the recipient's email address:")
-
-        elif "to_email" not in user_data[user_id]:
-            user_data[user_id]["to_email"] = msg.text
-            send_final_email(
-                from_email=user_data[user_id]["email"],
-                to_email=user_data[user_id]["to_email"],
-                body=user_data[user_id]["message"]
-            )
-            await msg.reply("Message successfully sent!")
-            del user_data[user_id]
-            del otp_data[user_id]
-
-def send_otp_email(to_email, otp):
-    msg = MIMEText(f"Your OTP is: {otp}")
-    msg["Subject"] = "Your Email Bot OTP"
-    msg["From"] = SENDER_EMAIL
-    msg["To"] = to_email
-
-    with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
-        server.login(SENDER_EMAIL, SENDER_PASSWORD)
-        server.send_message(msg)
-
-def send_final_email(from_email, to_email, body):
-    msg = MIMEText(body)
-    msg["Subject"] = "Message from Telegram Bot"
-    msg["From"] = from_email
-    msg["To"] = to_email
-
-    with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
-        server.login(SENDER_EMAIL, SENDER_PASSWORD)
-        server.send_message(msg)
-
-bot.run()
+app.run()
