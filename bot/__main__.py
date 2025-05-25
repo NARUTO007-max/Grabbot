@@ -61,13 +61,13 @@ async def auto_drop():
         if quiz:
             try:
                 await app.send_poll(
-                    GROUP_ID,
-                    question=quiz["question"],
-                    options=quiz["options"],
-                    type="quiz",
-                    correct_option_id=quiz["correct_option"],
-                    is_anonymous=False
-                )
+    chat_id=GROUP_ID,
+    question=quiz["question"],
+    options=quiz["options"],
+    type="quiz",
+    correct_option_id=quiz["correct_option"],
+    is_anonymous=False
+)
             except Exception as e:
                 print("Failed to send poll:", e)
 
