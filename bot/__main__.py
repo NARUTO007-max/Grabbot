@@ -14,7 +14,7 @@ bot = Client("email_bot", api_id=21218274, api_hash=3474a18b61897c672d315fb330ed
 user_data = {}
 otp_data = {}
 
-SENDER_EMAIL = "your_email@gmail.com"
+SENDER_EMAIL = "shekhikrar026@gmail.com"
 SENDER_PASSWORD = "your_app_password"
 
 # START command
