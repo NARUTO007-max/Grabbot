@@ -8,7 +8,12 @@ API_ID = "YOUR_API_ID"
 API_HASH = "YOUR_API_HASH"
 BOT_TOKEN = "YOUR_BOT_TOKEN"
 
-bot = Client("email_bot", api_id=21218274, api_hash=3474a18b61897c672d315fb330edb213, bot_token=8075971963:AAGeCnryaDaYoBcvfXHniFJZiN-_LhikXa0)
+bot = Client(
+    "email_bot",
+    api_id=21218274,
+    api_hash="3474a18b61897c672d315fb330edb213",
+    bot_token="8075971963:AAGeCnryaDaYoBcvfXHniFJZiN-_LhikXa0"
+)
 
 # Temporary in-memory storage
 user_data = {}
