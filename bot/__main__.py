@@ -5,14 +5,14 @@ import asyncio
 import json
 import random
 
-API_ID = 123456    # Replace with your API ID
-API_HASH = "your_api_hash"
-BOT_TOKEN = "your_bot_token"
-OWNER_ID = 123456789  # Replace with your Telegram ID
+API_ID = 21218274    # Replace with your API ID
+API_HASH = "3474a18b61897c672d315fb330edb213"
+BOT_TOKEN = "8075971963:AAGeCnryaDaYoBcvfXHniFJZiN-_LhikXa0"
+OWNER_ID = 7576729648  # Replace with your Telegram ID
 
 app = Client("anime_quiz_bot", api_id=API_ID, api_hash=API_HASH, bot_token=BOT_TOKEN)
 
-GROUP_ID = -1001234567890  # Replace with your group ID
+GROUP_ID = -1002535643821  # Replace with your group ID
 
 setup_db()
 
@@ -71,7 +71,7 @@ async def auto_drop():
                 print("Failed to send poll:", e)
 
 # Start auto drop loop
-@app.on_message(filters.command("start") & filters.user(OWNER_ID))
+@app.on_message(filters.command("start") & filters.user(7576729648))
 async def start_auto_drop(client, message: Message):
     await message.reply("Auto quiz drop started.")
     app.loop.create_task(auto_drop())
