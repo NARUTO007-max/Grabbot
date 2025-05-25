@@ -30,3 +30,22 @@ def get_random_quiz():
             "options": json.loads(row[2]),
             "correct_option": row[3]
         }
+
+def preload_quizzes():
+    questions = [
+        ("Who is the main protagonist of Naruto?", ["Sasuke", "Naruto", "Sakura", "Kakashi"], 1),
+        ("Which anime features a notebook that kills?", ["Bleach", "One Piece", "Death Note", "Naruto"], 2),
+        ("Luffy wants to become the?", ["Wizard King", "Pirate King", "Hokage", "Shinigami"], 1),
+        ("Goku belongs to which race?", ["Saiyan", "Namekian", "Human", "God"], 0),
+        ("What does Sharingan belong to?", ["Senju", "Uchiha", "Hyuga", "Kaguya"], 1),
+        ("Who killed Ace in One Piece?", ["Akainu", "Blackbeard", "Kaido", "Doflamingo"], 0),
+        ("Who is the captain of Squad 6 in Bleach?", ["Kenpachi", "Byakuya", "Ichigo", "Toshiro"], 1),
+        ("Which anime has alchemy as its main theme?", ["One Piece", "Fullmetal Alchemist", "Bleach", "Fairy Tail"], 1),
+        ("In Demon Slayer, what is Nezuko?", ["Human", "Demon", "Vampire", "Ghost"], 1),
+        ("Levi is a character from?", ["Naruto", "Bleach", "Attack on Titan", "Tokyo Ghoul"], 2),
+    ]
+    for q in questions:
+        add_quiz(q[0], q[1], q[2])
+
+# Run this only once
+# preload_quizzes()
