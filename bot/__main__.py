@@ -26,7 +26,7 @@ SENDER_PASSWORD = "ikkuikku1212"
 @bot.on_message(filters.command("start"))
 async def start(client, message: Message):
     await message.reply_photo(
-        photo="https://via.placeholder.com/300x150.png?text=Welcome",
+        photo="https://files.catbox.moe/5wfse2.jpg",
         caption="Welcome to the Email Bot! Use /email to start."
     )
 
