@@ -16,7 +16,7 @@ def setup_db():
     conn.commit()
 
 def add_quiz(question, options, correct_index):
-    cur.execute("INSERT INTO quiz (question, options, correct_option) VALUES (?, ?, ?)", 
+    cur.execute("INSERT INTO quiz (question, options, correct_option) VALUES (?, ?, ?)",
                 (question, json.dumps(options), correct_index))
     conn.commit()
 
