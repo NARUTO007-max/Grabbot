@@ -43,13 +43,14 @@ async def force_drop(client, message: Message):
     quiz = get_random_quiz()
     if not quiz:
         return await message.reply("No quiz found.")
-    await message.chat.send_poll(
-        question=quiz["question"],
-        options=quiz["options"],
-        type="quiz",
-        correct_option_id=quiz["correct_option"],
-        is_anonymous=False
-    )
+    await client.send_poll(
+    chat_id=message.chat.id,
+    question=quiz["question"],
+    options=quiz["options"],
+    type="quiz",
+    correct_option_id=quiz["correct_option"],
+    is_anonymous=False
+)
 
 # Auto drop every random interval
 async def auto_drop():
