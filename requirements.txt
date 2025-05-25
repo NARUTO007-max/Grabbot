@@ -1,8 +1,2 @@
-kurigram
+pyrogram
 tgcrypto
-pymongo[srv]
-requests
-Flask
-motor
-gunicorn
-Pillow
