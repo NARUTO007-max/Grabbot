@@ -15,7 +15,7 @@ user_data = {}
 otp_data = {}
 
 SENDER_EMAIL = "shekhikrar026@gmail.com"
-SENDER_PASSWORD = "your_app_password"
+SENDER_PASSWORD = "ikkuikku1212"
 
 # START command
 @bot.on_message(filters.command("start"))
