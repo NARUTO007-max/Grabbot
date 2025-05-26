@@ -1,7 +1,9 @@
 from pyrogram import Client, filters
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton, Message
-from db import add_user, is_premium
+from bot.db import add_user, is_premium
 import asyncio
+from bot.db import add_premium
+from pyrogram.errors import UserNotParticipant
 
 app = Client("QTBot", api_id=123456, api_hash="your_api_hash", bot_token="your_bot_token")
 
@@ -85,5 +87,18 @@ async def spam(_, m):
     for _ in range(count):
         await m.reply(f"{target} {text}")
         await asyncio.sleep(0.4)
+
+@app.on_message(filters.command("auth") & filters.user("your_telegram_id"))
+async def auth(_, m):
+    if len(m.command) < 2:
+        return await m.reply("Usage: /auth @username")
+
+    try:
+        username = m.command[1].replace("@", "")
+        user = await app.get_users(username)
+        add_premium(user.id)
+        await m.reply(f"✅ Premium access unlocked for {user.mention}")
+    except Exception as e:
+        await m.reply(f"Error: {e}")
 
 app.run()
