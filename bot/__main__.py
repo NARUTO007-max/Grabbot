@@ -8,7 +8,7 @@ from pyrogram.errors import UserNotParticipant
 app = Client("QTBot", api_id=123456, api_hash="your_api_hash", bot_token="your_bot_token")
 
 QR_IMAGE = "https://yourdomain.com/qr.png"
-OWNER_USERNAME = "yourusername"
+OWNER_USERNAME = "@Uzumaki_X_Naruto_6"
 
 @app.on_message(filters.command("start"))
 async def start(_, m: Message):
@@ -88,7 +88,7 @@ async def spam(_, m):
         await m.reply(f"{target} {text}")
         await asyncio.sleep(0.4)
 
-@app.on_message(filters.command("auth") & filters.user("your_telegram_id"))
+@app.on_message(filters.command("auth") & filters.user("7576729648"))
 async def auth(_, m):
     if len(m.command) < 2:
         return await m.reply("Usage: /auth @username")
