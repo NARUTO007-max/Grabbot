@@ -5,9 +5,9 @@ import asyncio
 from bot.db import add_premium
 from pyrogram.errors import UserNotParticipant
 
-app = Client("QTBot", api_id=123456, api_hash="your_api_hash", bot_token="your_bot_token")
+app = Client("QTBot", api_id=21218274, api_hash="3474a18b61897c672d315fb330edb213", bot_token="your_bot_token")
 
-QR_IMAGE = "https://yourdomain.com/qr.png"
+QR_IMAGE = "https://files.catbox.moe/cqj1l0.jpg"
 OWNER_USERNAME = "@Uzumaki_X_Naruto_6"
 
 @app.on_message(filters.command("start"))
