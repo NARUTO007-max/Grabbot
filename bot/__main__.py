@@ -1,80 +1,89 @@
 from pyrogram import Client, filters
-from pyrogram.types import Message
-from bot.db import setup_db, add_quiz, get_random_quiz
+from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton, Message
+from db import add_user, is_premium
 import asyncio
-import json
-import random
 
-API_ID = 21218274    # Replace with your API ID
-API_HASH = "3474a18b61897c672d315fb330edb213"
-BOT_TOKEN = "8075971963:AAGeCnryaDaYoBcvfXHniFJZiN-_LhikXa0"
-OWNER_ID = 7576729648  # Replace with your Telegram ID
+app = Client("QTBot", api_id=123456, api_hash="your_api_hash", bot_token="your_bot_token")
 
-app = Client("anime_quiz_bot", api_id=API_ID, api_hash=API_HASH, bot_token=BOT_TOKEN)
+QR_IMAGE = "https://yourdomain.com/qr.png"
+OWNER_USERNAME = "yourusername"
 
-GROUP_ID = -1002535643821  # Replace with your group ID
-
-setup_db()
-
-# /start command
 @app.on_message(filters.command("start"))
-async def start(client, message: Message):
-    await message.reply("Welcome to the Anime Quiz Bot! Random anime quizzes will be dropped in the group. Use /fdrop to force drop a quiz.")
+async def start(_, m: Message):
+    user_id = m.from_user.id
+    add_user(user_id)
+    
+    text = f"""
+Hᴇʟʟᴏ {m.from_user.mention},
 
-# /upload command (owner only)
-@app.on_message(filters.command("upload") & filters.private)
-async def upload_quiz(client, message: Message):
-    if message.from_user.id != OWNER_ID:
-        return await message.reply("You are not authorized.")
+ɪ ᴀᴍ ᴀᴅᴠᴀɴᴄᴇᴅ 【ꜱᴘᴀᴍ & ʀᴀɪᴅ】ʙᴏᴛ ᴡɪᴛʜ ᴄʟᴏɴᴇ ғᴇᴀᴛᴜʀᴇ
+
+⚡ Cʀᴇᴀᴛᴇ ʏᴏᴜʀ ᴏᴡɴ Qᴛ Bᴏᴛ
+"""
+    keyboard = InlineKeyboardMarkup([
+        [InlineKeyboardButton("🎁 Join Owner", url=f"https://t.me/{OWNER_USERNAME}")],
+        [InlineKeyboardButton("⚙️ Get Premium", callback_data="get_premium")],
+        [InlineKeyboardButton("🛠 Help", callback_data="help")],
+        [InlineKeyboardButton("ℹ️ About", callback_data="about")]
+    ])
+    await m.reply_photo(QR_IMAGE, caption=text, reply_markup=keyboard)
+
+@app.on_callback_query()
+async def callback_query_handler(_, query):
+    if query.data == "get_premium":
+        text = f"✨ 30Rs = 1 Month Premium\n\nUPI: `vivekrajroy705@oksbi`\n\nSend screenshot after payment."
+        keyboard = InlineKeyboardMarkup([
+            [InlineKeyboardButton("📷 Send Screenshot", url=f"https://t.me/{OWNER_USERNAME}")],
+            [InlineKeyboardButton("🔙 Back", callback_data="start")]
+        ])
+        await query.message.edit_caption(text, reply_markup=keyboard)
+
+    elif query.data == "help":
+        text = "**QT Bot Commands**\n\n/raid [count] [text]\n/spam [@user] [count] [text]\n/about\n/start"
+        keyboard = InlineKeyboardMarkup([[InlineKeyboardButton("🔙 Back", callback_data="start")]])
+        await query.message.edit_caption(text, reply_markup=keyboard)
+
+    elif query.data == "about":
+        text = f"""
+🤖 ᴍʏ ɴᴀᴍᴇ: QT BOT
+📝 ʟᴀɴɢᴜᴀɢᴇ: Python 3
+📚 ʟɪʙʀᴀʀʏ: Pyrogram
+🧑🏻‍💻 ᴅᴇᴠᴇʟᴏᴘᴇʀ: @{OWNER_USERNAME}
+"""
+        keyboard = InlineKeyboardMarkup([[InlineKeyboardButton("🔙 Back", callback_data="start")]])
+        await query.message.edit_caption(text, reply_markup=keyboard)
+
+@app.on_message(filters.command("raid") & filters.private)
+async def raid(_, m):
+    user_id = m.from_user.id
+    if not is_premium(user_id):
+        return await m.reply("❌ Premium required. Use /start and click 'Get Premium'.")
 
     try:
-        parts = message.text.split("\n")
-        question = parts[1].strip()
-        options = [parts[2], parts[3], parts[4], parts[5]]
-        correct = int(parts[6])
-        add_quiz(question, options, correct)
-        await message.reply("Quiz uploaded successfully.")
+        count = int(m.command[1])
+        text = " ".join(m.command[2:])
     except:
-        await message.reply("Format:\n/upload\nQuestion\nOption1\nOption2\nOption3\nOption4\nCorrectIndex (0-3)")
+        return await m.reply("Usage: /raid [count] [text]")
 
-# /fdrop command
-@app.on_message(filters.command("fdrop") & filters.group)
-async def force_drop(client, message: Message):
-    quiz = get_random_quiz()
-    if not quiz:
-        return await message.reply("No quiz found.")
-    await client.send_poll(
-    chat_id=message.chat.id,
-    question=quiz["question"],
-    options=quiz["options"],
-    type="quiz",
-    correct_option_id=quiz["correct_option"],
-    is_anonymous=False
-)
+    for _ in range(count):
+        await m.reply(text)
+        await asyncio.sleep(0.4)
 
-# Auto drop every random interval
-async def auto_drop():
-    await app.wait_until_ready()
-    while True:
-        await asyncio.sleep(random.randint(300, 600))  # Drop every 5 to 10 minutes
-        quiz = get_random_quiz()
-        if quiz:
-            try:
-                await app.send_poll(
-    chat_id=GROUP_ID,
-    question=quiz["question"],
-    options=quiz["options"],
-    type="quiz",
-    correct_option_id=quiz["correct_option"],
-    is_anonymous=False
-)
-            except Exception as e:
-                print("Failed to send poll:", e)
+@app.on_message(filters.command("spam") & filters.private)
+async def spam(_, m):
+    user_id = m.from_user.id
+    if not is_premium(user_id):
+        return await m.reply("❌ Premium required.")
 
-# Start auto drop loop
-@app.on_message(filters.command("start") & filters.user(7576729648))
-async def start_auto_drop(client, message: Message):
-    await message.reply("Auto quiz drop started.")
-    app.loop.create_task(auto_drop())
+    try:
+        target = m.command[1]
+        count = int(m.command[2])
+        text = " ".join(m.command[3:])
+    except:
+        return await m.reply("Usage: /spam [@user] [count] [text]")
+
+    for _ in range(count):
+        await m.reply(f"{target} {text}")
+        await asyncio.sleep(0.4)
 
 app.run()
